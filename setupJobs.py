@@ -104,7 +104,7 @@ try:
         datalst = [jdat['data']]
 
     with open(URLS,'w') as f:
-        for x in datalist:
+        for x in datalst:
             pathparts = os.path.split(x)
             if pathparts[0] == '/squid':
                 p = os.path.join('/',*pathparts[1:])
@@ -121,7 +121,7 @@ try:
         datalst = [jdat['metadata']]
 
     with open(URLS,'a') as f:
-        for x in datalist:
+        for x in datalst:
             pathparts = os.path.split(x)
             if pathparts[0] == '/squid':
                 p = os.path.join('/',*pathparts[1:])
@@ -179,7 +179,7 @@ for i, cfg in enumerate(allConfigs):
             datalst = [cfg['data']]
 
         with open(URLS,'w') as f:
-            for x in datalist:
+            for x in datalst:
                 pathparts = os.path.split(x)
                 if pathparts[0] == '/squid':
                     p = os.path.join('/',*pathparts[1:])
@@ -196,7 +196,7 @@ for i, cfg in enumerate(allConfigs):
             datalst = [cfg['metadata']]
 
         with open(URLS,'a') as f:
-            for x in datalist:
+            for x in datalst:
                 pathparts = os.path.split(x)
                 if pathparts[0] == '/squid':
                     p = os.path.join('/',*pathparts[1:])
