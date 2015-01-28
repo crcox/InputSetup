@@ -65,8 +65,9 @@ location of the interpreter on remote jobs.
                 f.write(line)
 
     elif not new == orig:
-        with open(orig,'r'), open(new,'w') as of,nf:
-            shutil.copyfileobj(of, nf)
+        with open(orig,'r') as of:
+            with open(new,'w') as nf:
+                shutil.copyfileobj(of, nf)
 
     os.chmod(new,0755)
 
