@@ -37,3 +37,29 @@ def build(pkg,chtcrun='./ChtcRun'):
         tf.add('ENV')
 
     print "NEW FILE: {pkg_con}".format(pkg_con=pkg_con)
+
+def fixshebang(orig,new=None):
+    """Will replace the #! line of an executable python script to point to the
+location of the interpreter on remote jobs.
+    orig: path to an executable python script to be fixed.
+    new: path specifying where a the corrected file should be written to. If
+    unspecified, the original file is overwritten."""
+
+    if new is None:
+        new = orig
+
+    with open(orig,'r') as f:
+        content = f.readlines()
+
+    if content[0][0:2] == '#!':
+        content[0] = '#!./python277/bin/python\n'
+
+        with open(new,'w') as f:
+            for line in content:
+                f.write(line)
+
+    elif not new == orig:
+        with open(orig,'r'), open(new,'w') as of,nf:
+            shutil.copyfileobj(of, nf)
+
+    os.chmod(new,0755)
