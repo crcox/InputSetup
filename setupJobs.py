@@ -105,9 +105,8 @@ try:
 
     with open(URLS,'w') as f:
         for x in datalst:
-            pathparts = os.path.split(x)
-            print pathparts
-            if pathparts[0] == '/squid':
+            pathparts = x.split(os.sep)
+            if x[:6] == '/squid':
                 p = os.path.join('/',*pathparts[1:])
                 f.write(p+'\n')
             else:
@@ -123,8 +122,8 @@ try:
 
     with open(URLS,'a') as f:
         for x in datalst:
-            pathparts = os.path.split(x)
-            if pathparts[0] == '/squid':
+            pathparts = x.split(os.sep)
+            if x[:6] == '/squid':
                 p = os.path.join('/',*pathparts[1:])
                 f.write(p+'\n')
             else:
