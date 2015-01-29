@@ -106,6 +106,7 @@ try:
     with open(URLS,'w') as f:
         for x in datalst:
             pathparts = os.path.split(x)
+            print pathparts
             if pathparts[0] == '/squid':
                 p = os.path.join('/',*pathparts[1:])
                 f.write(p+'\n')
