@@ -85,11 +85,17 @@ except KeyError:
     print "No shared binary indicated."
 
 try:
-    src_files = os.listdir(jdat['srcdir'])
-    for file_name in src_files:
-        full_file_name = os.path.join(jdat['srcdir'], file_name)
-        if (os.path.isfile(full_file_name)):
-            shutil.copy(full_file_name, sharedir)
+    if isinstance(jdat['srcdir'], list):
+        srclst = jdat['srcdir']
+    else:
+        srclst = [jdat['srcdir']]
+
+    for srcdir in srclst:
+        src_files = os.listdir(srcdir)
+        for file_name in src_files:
+            full_file_name = os.path.join(srcdir, file_name)
+            if (os.path.isfile(full_file_name)):
+                shutil.copy(full_file_name, sharedir)
 except KeyError:
     print "No shared source directory indicated."
 
@@ -160,11 +166,17 @@ for i, cfg in enumerate(allConfigs):
         pass
 
     try:
-        src_files = os.listdir(cfg['srcdir'])
-        for file_name in src_files:
-            full_file_name = os.path.join(cfg['srcdir'], file_name)
-            if (os.path.isfile(full_file_name)):
-                shutil.copy(full_file_name, sharedir)
+        if isinstance(jdat['srcdir'], list):
+            srclst = jdat['srcdir']
+        else:
+            srclst = [jdat['srcdir']]
+
+        for srcdir in srclst:
+            src_files = os.listdir(srcdir)
+            for file_name in src_files:
+                full_file_name = os.path.join(srcdir, file_name)
+                if (os.path.isfile(full_file_name)):
+                    shutil.copy(full_file_name, sharedir)
     except KeyError:
         pass
 

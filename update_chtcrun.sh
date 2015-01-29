@@ -27,7 +27,6 @@ echo "Updated R libraries lib/chtc-R"
 
 # Update executables
 #mv ChtcRun/chtcinnerwrapper ~/bin
-mv ChtcRun/chtcjobwrapper ~/bin
 mv ChtcRun/handypostscript.pl ~/bin
 mv ChtcRun/mkdag ~/bin
 mv ChtcRun/make-graphs ~/bin
@@ -48,8 +47,8 @@ rm -rf ChtcRun/Csrcs
 
 # Package ChtcRun_lite
 cd ChtcRun/
-tar czf ChtcRun_lite.tgz postjob.template process.template PROFILE README REPORTREADME RESULTVALUES
-rm postjob.template process.template PROFILE README REPORTREADME RESULTVALUES
+tar czf ChtcRun_lite.tgz chtcjobwrapper postjob.template process.template PROFILE README REPORTREADME RESULTVALUES
+rm postjob.template chtcjobwrapper process.template PROFILE README REPORTREADME RESULTVALUES
 mv ChtcRun_lite.tgz ~/
 cd ../
 rm -rf ChtcRun/ ChtcRun.tar.gz
