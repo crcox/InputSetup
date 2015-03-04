@@ -15,6 +15,8 @@ try:
     p.add_argument('master')
     p.add_argument('-r','--run',action='store_true',
         help="In addition to setting up the directory structure, run all analyses. Useful when the analysis is being done locally.")
+    p.add_argument('-c','--copy_data_src',action='store_true',
+        help="This flag indicates that data and source files should be copied into the shared directory.")
     args = p.parse_args()
 except ImportError:
     # Specify type of input associated with argument:
@@ -79,63 +81,65 @@ if not os.path.isdir(archivedir):
 #############################################################
 #      Copy shared source and binary files into place       #
 #############################################################
-try:
-    shutil.copy(jdat['binary'],sharedir)
-except KeyError:
-    print "No shared binary indicated."
+if args.copy_data_src:
+    try:
+        shutil.copy(jdat['binary'],sharedir)
+    except KeyError:
+        print "No shared binary indicated."
 
-try:
-    if isinstance(jdat['srcdir'], list):
-        srclst = jdat['srcdir']
-    else:
-        srclst = [jdat['srcdir']]
+    try:
+        if isinstance(jdat['srcdir'], list):
+            srclst = jdat['srcdir']
+        else:
+            srclst = [jdat['srcdir']]
 
-    for srcdir in srclst:
-        src_files = os.listdir(srcdir)
-        for file_name in src_files:
-            full_file_name = os.path.join(srcdir, file_name)
-            if (os.path.isfile(full_file_name)):
-                shutil.copy(full_file_name, sharedir)
-except KeyError:
-    print "No shared source directory indicated."
+        for srcdir in srclst:
+            src_files = os.listdir(srcdir)
+            for file_name in src_files:
+                full_file_name = os.path.join(srcdir, file_name)
+                if (os.path.isfile(full_file_name)):
+                    shutil.copy(full_file_name, sharedir)
+    except KeyError:
+        print "No shared source directory indicated."
 
 #############################################################
 #       Copy shared data / Write shared URLS file           #
 #############################################################
-URLS = os.path.join(sharedir,'URLS')
-try:
-    if isinstance(jdat['data'],list):
-        datalst = jdat['data']
-    else:
-        datalst = [jdat['data']]
+if args.copy_data_src:
+    URLS = os.path.join(sharedir,'URLS')
+    try:
+        if isinstance(jdat['data'],list):
+            datalst = jdat['data']
+        else:
+            datalst = [jdat['data']]
 
-    with open(URLS,'w') as f:
-        for x in datalst:
-            pathparts = x.split(os.sep)
-            if x[:6] == '/squid':
-                p = os.path.join('/',*pathparts[1:])
-                f.write(p+'\n')
-            else:
-                shutil.copy(x,sharedir)
-except KeyError:
-    print "No shared data files indicated."
+        with open(URLS,'w') as f:
+            for x in datalst:
+                pathparts = x.split(os.sep)
+                if x[:6] == '/squid':
+                    p = os.path.join('/',*pathparts[1:])
+                    f.write(p+'\n')
+                else:
+                    shutil.copy(x,sharedir)
+    except KeyError:
+        print "No shared data files indicated."
 
-try:
-    if isinstance(jdat['metadata'],list):
-        datalst = jdat['metadata']
-    else:
-        datalst = [jdat['metadata']]
+    try:
+        if isinstance(jdat['metadata'],list):
+            datalst = jdat['metadata']
+        else:
+            datalst = [jdat['metadata']]
 
-    with open(URLS,'a') as f:
-        for x in datalst:
-            pathparts = x.split(os.sep)
-            if x[:6] == '/squid':
-                p = os.path.join('/',*pathparts[1:])
-                f.write(p+'\n')
-            else:
-                shutil.copy(x,sharedir)
-except KeyError:
-    print "No shared metadata indicated."
+        with open(URLS,'a') as f:
+            for x in datalst:
+                pathparts = x.split(os.sep)
+                if x[:6] == '/squid':
+                    p = os.path.join('/',*pathparts[1:])
+                    f.write(p+'\n')
+                else:
+                    shutil.copy(x,sharedir)
+    except KeyError:
+        print "No shared metadata indicated."
 
 #############################################################
 #        Loop over configs (if condor, do setup only)       #
