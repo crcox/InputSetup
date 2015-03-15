@@ -105,41 +105,42 @@ if args.copy_data_src:
 #############################################################
 #       Copy shared data / Write shared URLS file           #
 #############################################################
-if args.copy_data_src:
-    URLS = os.path.join(sharedir,'URLS')
-    try:
-        if isinstance(jdat['data'],list):
-            datalst = jdat['data']
-        else:
-            datalst = [jdat['data']]
+URLS = os.path.join(sharedir,'URLS_SHARED')
+try:
+    if isinstance(jdat['data'],list):
+        datalst = jdat['data']
+    else:
+        datalst = [jdat['data']]
 
-        with open(URLS,'w') as f:
-            for x in datalst:
-                pathparts = x.split(os.sep)
-                if x[:6] == '/squid':
-                    p = os.path.join('/',*pathparts[1:])
-                    f.write(p+'\n')
-                else:
+    with open(URLS,'w') as f:
+        for x in datalst:
+            pathparts = x.split(os.sep)
+            if x[:6] == '/squid':
+                p = os.path.join('/',*pathparts[1:])
+                f.write(p+'\n')
+            else:
+                if args.copy_data_src:
                     shutil.copy(x,sharedir)
-    except KeyError:
-        print "No shared data files indicated."
+except KeyError:
+    print "No shared data files indicated."
 
-    try:
-        if isinstance(jdat['metadata'],list):
-            datalst = jdat['metadata']
-        else:
-            datalst = [jdat['metadata']]
+try:
+    if isinstance(jdat['metadata'],list):
+        datalst = jdat['metadata']
+    else:
+        datalst = [jdat['metadata']]
 
-        with open(URLS,'a') as f:
-            for x in datalst:
-                pathparts = x.split(os.sep)
-                if x[:6] == '/squid':
-                    p = os.path.join('/',*pathparts[1:])
-                    f.write(p+'\n')
-                else:
+    with open(URLS,'a') as f:
+        for x in datalst:
+            pathparts = x.split(os.sep)
+            if x[:6] == '/squid':
+                p = os.path.join('/',*pathparts[1:])
+                f.write(p+'\n')
+            else:
+                if args.copy_data_src:
                     shutil.copy(x,sharedir)
-    except KeyError:
-        print "No shared metadata indicated."
+except KeyError:
+    print "No shared metadata indicated."
 
 #############################################################
 #        Loop over configs (if condor, do setup only)       #
@@ -164,30 +165,31 @@ for i, cfg in enumerate(allConfigs):
     #############################################################
     #       Copy job source and binary files into place         #
     #############################################################
-    try:
-        shutil.copy(cfg['binary'],sharedir)
-    except KeyError:
-        pass
+    if args.copy_data_src:
+        try:
+            shutil.copy(cfg['binary'],sharedir)
+        except KeyError:
+            pass
 
-    try:
-        if isinstance(jdat['srcdir'], list):
-            srclst = jdat['srcdir']
-        else:
-            srclst = [jdat['srcdir']]
+        try:
+            if isinstance(jdat['srcdir'], list):
+                srclst = jdat['srcdir']
+            else:
+                srclst = [jdat['srcdir']]
 
-        for srcdir in srclst:
-            src_files = os.listdir(srcdir)
-            for file_name in src_files:
-                full_file_name = os.path.join(srcdir, file_name)
-                if (os.path.isfile(full_file_name)):
-                    shutil.copy(full_file_name, sharedir)
-    except KeyError:
-        pass
+            for srcdir in srclst:
+                src_files = os.listdir(srcdir)
+                for file_name in src_files:
+                    full_file_name = os.path.join(srcdir, file_name)
+                    if (os.path.isfile(full_file_name)):
+                        shutil.copy(full_file_name, sharedir)
+        except KeyError:
+            pass
 
     #############################################################
     #          Copy job data / Write shared URLS file           #
     #############################################################
-    URLS = os.path.join(sharedir,'URLS')
+    URLS = os.path.join(jobdir,'URLS')
     try:
         if isinstance(cfg['data'],list):
             datalst = cfg['data']
@@ -201,7 +203,8 @@ for i, cfg in enumerate(allConfigs):
                     p = os.path.join('/',*pathparts[1:])
                     f.write(p+'\n')
                 else:
-                    shutil.copy(x,sharedir)
+                    if args.copy_data_src:
+                        shutil.copy(x,sharedir)
     except KeyError:
         pass
 
