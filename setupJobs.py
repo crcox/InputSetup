@@ -109,14 +109,16 @@ URLS = os.path.join(sharedir,'URLS_SHARED')
 try:
     if isinstance(jdat['data'],list):
         datalst = jdat['data']
+        jdat['data'] = [os.path.split(x)[1] for x in jdat['data']]
     else:
         datalst = [jdat['data']]
+        jdat['data'] = os.path.split(jdat['data'])[1]
 
     with open(URLS,'w') as f:
         for x in datalst:
             pathparts = x.split(os.sep)
             if x[:6] == '/squid':
-                p = os.path.join('/',*pathparts[1:])
+                p = os.path.join('/',*pathparts[2:])
                 f.write(p+'\n')
             else:
                 if args.copy_data_src:
@@ -127,14 +129,16 @@ except KeyError:
 try:
     if isinstance(jdat['metadata'],list):
         datalst = jdat['metadata']
+        jdat['metadata'] = [os.path.split(x)[1] for x in jdat['metadata']]
     else:
         datalst = [jdat['metadata']]
+        jdat['metadata'] = os.path.split(jdat['metadata'])[1]
 
     with open(URLS,'a') as f:
         for x in datalst:
             pathparts = x.split(os.sep)
             if x[:6] == '/squid':
-                p = os.path.join('/',*pathparts[1:])
+                p = os.path.join('/',*pathparts[2:])
                 f.write(p+'\n')
             else:
                 if args.copy_data_src:
@@ -193,14 +197,16 @@ for i, cfg in enumerate(allConfigs):
     try:
         if isinstance(cfg['data'],list):
             datalst = cfg['data']
+            cfg['data'] = [os.path.split(x)[1] for x in cfg['data']]
         else:
             datalst = [cfg['data']]
+            cfg['data'] = os.path.split(cfg['data'])[1]
 
         with open(URLS,'w') as f:
             for x in datalst:
-                pathparts = os.path.split(x)
-                if pathparts[0] == '/squid':
-                    p = os.path.join('/',*pathparts[1:])
+                pathparts = x.split(os.sep)
+                if x[:6] == '/squid':
+                    p = os.path.join('/',*pathparts[2:])
                     f.write(p+'\n')
                 else:
                     if args.copy_data_src:
@@ -211,14 +217,16 @@ for i, cfg in enumerate(allConfigs):
     try:
         if isinstance(cfg['metadata'],list):
             datalst = cfg['metadata']
+            cfg['metadata'] = [os.path.split(x)[1] for x in cfg['metadata']]
         else:
             datalst = [cfg['metadata']]
+            cfg['metadata'] = os.path.split(cfg['metadata'])[1]
 
         with open(URLS,'a') as f:
             for x in datalst:
-                pathparts = os.path.split(x)
-                if pathparts[0] == '/squid':
-                    p = os.path.join('/',*pathparts[1:])
+                pathparts = x.split(os.sep)
+                if x[:6] == '/squid':
+                    p = os.path.join('/',*pathparts[2:])
                     f.write(p+'\n')
                 else:
                     shutil.copy(x,sharedir)
