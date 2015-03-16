@@ -197,10 +197,10 @@ for i, cfg in enumerate(allConfigs):
     try:
         if isinstance(cfg['data'],list):
             datalst = cfg['data']
-            cfg['data'] = [os.path.split(x)[1] for x in cfg['data']]
+            currentConfig['data'] = [os.path.split(x)[1] for x in cfg['data']]
         else:
             datalst = [cfg['data']]
-            cfg['data'] = os.path.split(cfg['data'])[1]
+            currentConfig['data'] = os.path.split(cfg['data'])[1]
 
         with open(URLS,'w') as f:
             for x in datalst:
@@ -217,10 +217,10 @@ for i, cfg in enumerate(allConfigs):
     try:
         if isinstance(cfg['metadata'],list):
             datalst = cfg['metadata']
-            cfg['metadata'] = [os.path.split(x)[1] for x in cfg['metadata']]
+            currentConfig['metadata'] = [os.path.split(x)[1] for x in cfg['metadata']]
         else:
             datalst = [cfg['metadata']]
-            cfg['metadata'] = os.path.split(cfg['metadata'])[1]
+            currentConfig['metadata'] = os.path.split(cfg['metadata'])[1]
 
         with open(URLS,'a') as f:
             for x in datalst:
