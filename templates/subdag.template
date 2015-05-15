@@ -1,0 +1,4 @@
+JOB <% $UNIQUE %> <% $SUBMITFILE %> dir <% $JOBDIR %>
+<%  if ( defined $PRESCRIPT ) { $OUT = "SCRIPT PRE " . $UNIQUE . " " . $PRESCRIPT  }  %>
+<%  if ( defined $POSTSCRIPT ) {  $OUT = "SCRIPT POST " . $UNIQUE . " " . $POSTSCRIPT  }  %>
+RETRY <% $UNIQUE %> 10
