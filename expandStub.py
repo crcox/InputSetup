@@ -4,27 +4,13 @@ import os
 import json
 import sys
 import itertools
+import argparse
 
-# Condor actually runs python 2.6, so argparse is not available.
-try:
-    import argparse
-    p = argparse.ArgumentParser()
-    p.add_argument('stub')
-    p.add_argument('-k','--keys',nargs='+',
-        help="List of keys that contain lists that need to be expanded across multiple configs.")
-    args = p.parse_args()
-except ImportError:
-    class Args:
-        def __init__(self):
-            self.stub = ''
-            self.keys = []
-    args = Args()
-    args.stub = sys.argv[1]
-    args.keys = []
-    for arg in sys.argv[2:]:
-        if arg in ('-k','--keys'):
-            continue
-        args.keys.append(arg)
+p = argparse.ArgumentParser()
+p.add_argument('stub')
+p.add_argument('-k','--keys',nargs='+',
+    help="List of keys that contain lists that need to be expanded across multiple configs.")
+args = p.parse_args()
 
 with open(args.stub, 'rb') as f:
     jdat = json.load(f)
