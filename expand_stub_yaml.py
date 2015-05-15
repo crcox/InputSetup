@@ -59,7 +59,7 @@ print N
 print n
 for i in xrange(N):
     #inds = unravel_index(i, n)
-    inds = ind2sub(n, i)[::-1]
+    inds = ind2sub(n, i)
     for ii,k in enumerate(ToExpand):
         configs[i][k] = ydat[k][inds[ii]]
 
