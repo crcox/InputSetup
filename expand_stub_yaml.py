@@ -5,7 +5,25 @@ import sys
 import os
 import shutil
 from operator import mul
-from numpy import unravel_index
+#from numpy import unravel_index
+
+def ind2sub( sizes, index ):
+    """
+    Map a scalar index of a flat 1D array to the equivalent
+    d-dimensional index
+    Example:
+    | 1  4  7 |      | 1,1  1,2  1,3 |
+    | 2  5  8 |  --> | 2,1  2,2  2,3 |
+    | 3  6  9 |      | 3,1  3,2  3,3 |
+    """
+    denom = reduce(mul, sizes, 1)
+    num_dims = len(sizes)
+    multi_index = [0 for i in range(num_dims)]
+    for i in xrange( num_dims - 1, -1, -1 ):
+        denom /= sizes[i]
+        multi_index[i] = index / denom
+        index = index % denom
+    return multi_index
 
 assert len(sys.argv) == 2
 
@@ -40,7 +58,8 @@ configs = [dict(ydat) for i in xrange(N)]
 print N
 print n
 for i in xrange(N):
-    inds = unravel_index(i, n)
+    #inds = unravel_index(i, n)
+    inds = ind2sub(n, i)[::-1]
     for ii,k in enumerate(ToExpand):
         configs[i][k] = ydat[k][inds[ii]]
 
