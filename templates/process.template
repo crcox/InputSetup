@@ -5,7 +5,6 @@
 #
 # If your jobs are less than 4 hours long, "flock" them additionally to 
 # other HTCondor pools on campus.
-<% $WRAPPER %>
 +WantFlocking = <% $FLOCK %>
 #
 # If your jobs are less than ~2 hours long, "glide" them to the national

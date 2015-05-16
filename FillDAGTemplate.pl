@@ -42,6 +42,6 @@ for ( my $i=0; $i < $njobs; $i++ ) {
   if (not defined $result) { die "Couldn't fill in template: $Text::Template::ERROR" };
   print $fh $result;
   close $fh;
-  printf $fhsweep "SPLICE " . path($filename)->absolute->stringify . "\n"
+  printf $fhsweep "SPLICE %03d %s\n",$i,path($filename)->absolute->stringify
 }
 close $fhsweep;
