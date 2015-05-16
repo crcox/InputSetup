@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import subprocess
 import yaml
+import json
 import os
 import sys
 import shutil
@@ -95,7 +96,7 @@ if sharedenv == 'condor':
                     for m in sharedmeta:
                         f.write(m+'\n')
                 else:
-                    f.write(metadata+'\n')
+                    f.write(sharedmeta+'\n')
 
     if not all(MetaAreSame) or not all(DataAreSame):
         for i in xrange(len(ydat)):
@@ -151,16 +152,19 @@ if sharedenv == 'condor':
             ydat[i]['metadata'] = mmod
 
 #############################################################
-#           Distribute params.yaml file to each job         #
+#           Distribute params.json file to each job         #
 #############################################################
 for i, cfg in enumerate(ydat):
     jobdir = os.path.join(rootdir, "{job:03d}".format(job=i))
     if not os.path.isdir(jobdir):
         os.makedirs(jobdir)
-    paramfile = os.path.join(jobdir,'params.yaml')
+    paramfile = os.path.join(jobdir,'params.json')
     with open(paramfile, 'w') as f:
-        yaml.dump(cfg, f)
+        json.dump(cfg, f, sort_keys = True, indent = 4)
 
+#############################################################
+#          Perform other optional setup operations          #
+#############################################################
 if args.setup_dags:
     FillDAGTemplate = [
             os.path.join(PERLBIN,'FillDAGTemplate.pl'),
