@@ -90,7 +90,7 @@ if sharedenv == 'condor':
                     for d in shareddata:
                         f.write(d+'\n')
                 else:
-                    f.write(sharedata+'\n')
+                    f.write(shareddata+'\n')
             if all(MetaAreSame):
                 if isinstance(sharedmeta,list):
                     for m in sharedmeta:
