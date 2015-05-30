@@ -68,88 +68,60 @@ if sharedenv == 'condor':
     implied and so can be excluded. (e.g., instead of /squid/crcox, use just
     /crcox.)
     """
-    ## Data
-    assert 'data' in ydat[0]
-    ref = ydat[0]['data']
-    DataAreSame = [ref==ydat[i]['data'] for i in xrange(len(ydat))]
-    if all(DataAreSame):
-        shareddata = ref
+    if isinstance(ydat[0]['URLS'],list):
+        toURL = ydat[0]['URLS']
+    else:
+        toURL = [ydat[0]['URLS']]
 
-    ## Metadata
-    assert 'metadata' in ydat[0]
-    ref = ydat[0]['metadata']
-    MetaAreSame = [ref==ydat[i]['metadata'] for i in xrange(len(ydat))]
-    if all(MetaAreSame):
-        sharedmeta = ref
+    SharedURLS = []
+    for field in toURL:
+        ref = ydat[0][field]
+        DataAreSame = [ref==ydat[i][field] for i in xrange(len(ydat))]
+        if all(DataAreSame):
+            shareddata = ref
 
-    if all(MetaAreSame) or all(DataAreSame):
-        URLS = os.path.join(sharedir,'URLS_SHARED')
-        with open(URLS,'w') as f:
-            if all(DataAreSame):
-                if isinstance(shareddata,list):
-                    for d in shareddata:
-                        f.write(d+'\n')
-                else:
-                    f.write(shareddata+'\n')
-            if all(MetaAreSame):
-                if isinstance(sharedmeta,list):
-                    for m in sharedmeta:
-                        f.write(m+'\n')
-                else:
-                    f.write(sharedmeta+'\n')
+        if all(DataAreSame):
+            if isinstance(shareddata,list):
+                SharedURLS.extend(shareddata)
+            else:
+                SharedURLS.append(shareddata)
 
-    if not all(MetaAreSame) or not all(DataAreSame):
-        for i in xrange(len(ydat)):
-            jobdir = os.path.join(rootdir, "{job:03d}".format(job=i))
-            if not os.path.isdir(jobdir):
-                os.makedirs(jobdir)
-            URLS = os.path.join(jobdir,'URLS')
-            with open(URLS,'w') as f:
-                if not all(DataAreSame):
-                    data = ydat[i]['data']
+        else:
+            for i in xrange(len(ydat)):
+                jobdir = os.path.join(rootdir, "{job:03d}".format(job=i))
+                if not os.path.isdir(jobdir):
+                    os.makedirs(jobdir)
+                URLS = os.path.join(jobdir,'URLS')
+                with open(URLS,'w') as f:
+                    data = ydat[i][field]
                     if isinstance(data,list):
                         for d in data:
                             f.write(d+'\n')
                     else:
                         f.write(data+'\n')
-                if not all(MetaAreSame):
-                    meta = ydat[i]['metadata']
-                    if isinstance(meta,list):
-                        for m in meta:
-                            f.write(m+'\n')
-                    else:
-                        f.write(meta+'\n')
 
-    ## Modify the data paths to point to a local data directory rather than to
-    ## the squid proxy server. This will allow data to be loaded on the job
-    ## machine.
-    for i in xrange(len(ydat)):
-        data = ydat[i]['data']
-        if isinstance(data,list):
-            if len(data) > 1:
-                for ii,d in enumerate(data):
-                    dmod = os.path.join('data',os.path.basename(d))
-                    ydat[i]['data'][ii] = dmod
+        # Modify the data paths to point to a local data directory rather than
+        # the squid proxy server. This will allow data to be loaded on the
+        # machine.
+        for i in xrange(len(ydat)):
+            data = ydat[i][field]
+            if isinstance(data,list):
+                if len(data) > 1:
+                    for ii,d in enumerate(data):
+                        dmod = os.path.basename(d)
+                        ydat[i][field][ii] = dmod
+                else:
+                    dmod = os.path.basename(data[0])
+                    ydat[i][field] = dmod
+
             else:
-                dmod = os.path.join('data',os.path.basename(data[0]))
-                ydat[i]['data'] = dmod
+                dmod = os.path.basename(data)
+                ydat[i][field] = dmod
 
-        else:
-            dmod = os.path.join('data',os.path.basename(data))
-            ydat[i]['data'] = dmod
-        meta = ydat[i]['metadata']
-        if isinstance(meta,list):
-            if len(meta) > 1:
-                for ii,m in enumerate(meta):
-                    mmod = os.path.join('data',os.path.basename(m))
-                    ydat[i]['metadata'][ii] = mmod
-            else:
-                mmod = os.path.join('data',os.path.basename(meta[0]))
-                ydat[i]['metadata'] = mmod
-
-        else:
-            mmod = os.path.join('data',os.path.basename(meta))
-            ydat[i]['metadata'] = mmod
+    if SharedURLS:
+        URLS = os.path.join(sharedir,'URLS_SHARED')
+        with open(URLS,'w') as f:
+            f.write('\n'.join(SharedURLS))
 
 #############################################################
 #           Distribute params.json file to each job         #
