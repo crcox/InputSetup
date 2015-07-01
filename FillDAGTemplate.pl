@@ -8,6 +8,7 @@ use Path::Tiny qw( path );
 
 my $templatefile = $ARGV[0];
 my $njobs = $ARGV[1];
+my $w = length(sprintf("%d", $njobs-1));
 
 my $template = Text::Template->new(SOURCE => $templatefile, DELIMITERS => [qw(<% %>)])
   or die "Couldn't construct template: $Text::Template::ERROR";
@@ -30,7 +31,7 @@ my $sweepdag = "sweep.dag";
 open(my $fhsweep, '>', $sweepdag) or die "Could not open file '$sweepdag' $!";
 for ( my $i=0; $i < $njobs; $i++ ) {
   # Fill in the template
-  my $jobcode = sprintf("%03d", $i);
+  my $jobcode = sprintf("%0${w}d", $i);
   $vars{ "UNIQUE" } = $jobcode;
   $vars{ "JOBDIR" } = path($jobcode)->absolute->stringify;
   $vars{ "SUBMITFILE" } = path("$jobcode/process.sub")->absolute->stringify;
@@ -42,6 +43,6 @@ for ( my $i=0; $i < $njobs; $i++ ) {
   if (not defined $result) { die "Couldn't fill in template: $Text::Template::ERROR" };
   print $fh $result;
   close $fh;
-  printf $fhsweep "SPLICE %03d %s\n",$i,path($filename)->absolute->stringify
+  printf $fhsweep "SPLICE %0${w}d %s\n",$i,path($filename)->absolute->stringify
 }
 close $fhsweep;

@@ -11,6 +11,8 @@ my $templatefile = $ARGV[0];
 my $njobs = $ARGV[1];
 my $config   = $ARGV[2];
 
+my $w = length(sprintf("%d", $njobs-1));
+
 my %unitsize = ();
 $unitsize{"KB"}=10e3;
 $unitsize{"MB"}=10e6;
@@ -43,7 +45,7 @@ $vars{WRAPPER} = path($vars{WRAPPER})->absolute->stringify;
 
 for ( my $i=0; $i < $njobs; $i++ ) {
   # Fill in the template
-  my $jobcode = sprintf("%03d", $i);
+  my $jobcode = sprintf("%0${w}d", $i);
   my $jobdir =  path($jobcode)->absolute->stringify;
   $vars{ "JOB" } = $jobcode;
   $vars{ "JOBDIR" } = $jobdir;
