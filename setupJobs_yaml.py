@@ -230,7 +230,7 @@ if 'URLS' in ydat[0]:
     if SharedURLS:
         URLS = os.path.join(sharedir,'URLS_SHARED')
         with open(URLS,'w') as f:
-            f.write('\n'.join(SharedURLS))
+            f.write('\n'.join(SharedURLS)+'\n')
 
 #############################################################
 #           Distribute params.json file to each job         #
