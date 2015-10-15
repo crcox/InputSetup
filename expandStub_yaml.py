@@ -6,7 +6,6 @@ import sys
 import os
 import shutil
 from operator import mul
-#from numpy import unravel_index
 
 def ind2sub( sizes, index ):
     """
@@ -31,6 +30,7 @@ assert len(sys.argv) == 2
 stubfile = sys.argv[1]
 home = os.path.dirname(stubfile)
 masterfile = os.path.join(home, 'master.yaml')
+ExpandFields = []
 
 with open(stubfile, 'r') as f:
     ydat = yaml.load(f)
@@ -44,25 +44,41 @@ except KeyError:
     shutil.copyfile(stubfile, masterfile)
     sys.exit(0)
 
-n = [len(ydat[x]) for x in ToExpand]
-N = reduce(mul, n, 1)
+nPerField = []
+for field in ToExpand:
+	if isinstance(field,list) or isinstance(field,tuple):
+		flength = []
+		for k in field:
+			flength.append(len(ydat[k]))
+
+		if not all([fl==flength[0] for fl in flength]):
+			"condortools:ExpandStub_yaml:error: Linked fields are of different lengths."
+			sys.exit(1)
+
+		nPerField.append(flength[0])
+	else:
+		k = field
+		nPerField.append(len(ydat[k]))
+
+N = reduce(mul, nPerField, 1)
 
 if N > 1000:
     print "WARNING! About to expand the stub into {n:d} configs. Is this what you want?".format(n=N)
     decision = raw_input('[y/n]: ').lower()
     if not decision == "y":
         print "Exiting..."
-        sys.exit(1)
+        sys.exit(0)
 
 configs = [dict(ydat) for i in xrange(N)]
-
-print N
-print n
 for i in xrange(N):
-    #inds = unravel_index(i, n)
-    inds = ind2sub(n, i)
-    for ii,k in enumerate(ToExpand):
-        configs[i][k] = ydat[k][inds[ii]]
+    inds = ind2sub(nPerField, i)
+    for ii,field in enumerate(ToExpand):
+		if isinstance(field,list) or isinstance(field,tuple):
+			for k in field:
+				configs[i][k] = ydat[k][inds[ii]]
+		else:
+			k = field
+			configs[i][k] = ydat[k][inds[ii]]
 
 with open(masterfile, 'w') as f:
     yaml.dump_all(configs, f)
