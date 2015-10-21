@@ -32,68 +32,79 @@ node with:
 
 `ssh <username>@chtc`
 
-expandStub.py
+expandStub_yaml.py
 -------------
-This program allows you to take a json "stub file" such as:
+This program allows you to take a yaml "stub file" such as:
 
-```json
-# stub.json
-{
-  "x": [1,2,3],
-  "y": ["a","b"],
-  "z": 9001
-}
+```yaml
+# stub.yaml
+A: 1
+B: 2
+C: [1,2]
+D: [3,4]
+E: [1,2,3]
+F: [7,8,9]
+ExpandFields:
+    - [C,D]
+    - E
 ```
 
 into:
 
-```json
+```yaml
 # master.json
-{
-  "x": [1,2,3],
-  "y": ["a","b"],
-  "z": 9001,
-  "configs": [
-    {
-      "x": 1,
-      "y": "a"
-    },
-    {
-      "x": 2,
-      "y": "a"
-    },
-    {
-      "x": 3,
-      "y": "b"
-    },
-    {
-      "x": 1,
-      "y": "b"
-    },
-    {
-      "x": 2,
-      "y": "b"
-    },
-    {
-      "x": 3,
-      "y": "b"
-    }
-  ]
-}
+A: 1
+B: 2
+C: 1
+D: 3
+E: 1
+F: [7, 8, 9]
+---
+A: 1
+B: 2
+C: 2
+D: 4
+E: 1
+F: [7, 8, 9]
+---
+A: 1
+B: 2
+C: 1
+D: 3
+E: 2
+F: [7, 8, 9]
+---
+A: 1
+B: 2
+C: 2
+D: 4
+E: 2
+F: [7, 8, 9]
+---
+A: 1
+B: 2
+C: 1
+D: 3
+E: 3
+F: [7, 8, 9]
+---
+A: 1
+B: 2
+C: 2
+D: 4
+E: 3
+F: [7, 8, 9]
 ```
 
 using:
 
-`./expandStub.py stub.json -k x y`
+`./expandStub.py stub.json`
 
-The values after the `-k` indicate which fields need to be expanded
-across individual configurations. Each one of these configurations will
-be associated with an independent job that we will dispatch to the
-cluster. The output is a new json file, `master.json`.
+In `stub.yaml`, I am specifying a scheme that involves several parameters. I am saying: "For all jobs, `A=1` and `B=2`, and `F=[7,8,9]`. Each job will get additionally some combination of `C`, `D`, and `E`, and that is defined by the (cryptic) `ExpandFields` special parameter.  In particular, `C` and `D` are linked such that some jobs will get `C=1` and `D=3`, while others will get `C=2` and `D=4`. `E` is not linked with anything, so it should be crossed with `[C,D]` (which are linked, and so can be considered as a set)".
 
-setupJobs.py
+setupJobs_yaml.py
 -----------
-This script simply translates the `master.json` file produced by
+This script simply translates the `master.yaml` file produced by
 `expandStub.py` into a series of folders, each with their own config
 file. Currently, this script is rather project specific, but there are
 core features that may be extracted into a function in the `pycon`
