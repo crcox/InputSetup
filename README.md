@@ -3,6 +3,12 @@ Condor Tools
 This repository is a collection of small programs that support setting
 up and administrating jobs on condor/chtc submit nodes.
 
+Analysis Protocol
+-----------------
+See how I set up jobs for dispatch on HTCondor here:
+
+https://gist.github.com/crcox/899e27a56a0c7f1126bf
+
 Installation
 -------------
 `./install`
