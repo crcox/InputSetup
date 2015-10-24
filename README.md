@@ -24,8 +24,8 @@ Dependencies
 ------------
 This set of tools has a number of Python and Perl dependencies. Depending on your environment, you may need to manage these dependencies at the user level (as opposed to the system level). For guides on how to administer Python and Perl in one such restricted environment (a HTCondor submit node maintained by the CHTC at University of Wisconsin-Madison), see the following two links:
 
-- [Administering Python on the Submit Node](https://slack-files.com/T0ACHHWFN-F0D4QPQJD-b897ef344a)
-- [Administering Perl on the Submit Node](https://gist.github.com/crcox/2fda1ed0d2766cd992d1)
+- [Administering Python on the Submit Node](https://gist.github.com/crcox/2fda1ed0d2766cd992d1)
+- [Administering Perl on the Submit Node](https://gist.github.com/crcox/da0d36e05b66cbec3f73)
 
 Once you are setup to install modules locally and have ensured these local directories are on all relevant paths, the following modules need to be installed:
 
