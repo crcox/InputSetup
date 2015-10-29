@@ -8,7 +8,7 @@ TMPDIR=$(mktemp -dt "$(basename $0).XXXXXXXXXX")
 #   HOLD   = 5
 
 condor_q \
-	-submitter crcox \
+	-submitter $USER \
 	-format "%d" DAGManJobID \
 	-format ",%d" ClusterID \
 	-format ".%d" ProcID \
@@ -17,6 +17,8 @@ condor_q \
 # Lines that correspond to running DAGs will not have a DAGManJobID, and so the
 # first entry will be blank.
 ACTIVEDAGS=$(awk 'BEGIN{FS=","}$1==""{print $2}' $TMPDIR/condor_q.out | tee ${TMPDIR}/active.id)
+sed -i.bak 's/\.0//' ${TMPDIR}/active.id
+
 if [ -f "${HOME}/.activedags" ]; then
   # Rewrite the activedag file and drop finished ones
   grep -f $TMPDIR/active.id ${HOME}/.activedags > $TMPDIR/active
@@ -33,12 +35,12 @@ for dag in $ACTIVEDAGS; do
   nactive=$(awk -v dagc=$dagc 'BEGIN{FS=",";N=0} ($1==dagc) && ($3==2) {N++} END{print N}' $TMPDIR/condor_q.out)
   nhold=$(awk -v dagc=$dagc 'BEGIN{FS=",";N=0} ($1==dagc) && ($3==5) {N++} END{print N}' $TMPDIR/condor_q.out)
   if [ -f "${TMPDIR}/active" ]; then
-    dagdir=$(awk -v dag=$dag 'BEGIN{FS=","} ($1==dag) {print $2}' ${TMPDIR}/active)
-    label=$(awk -v dag=$dag 'BEGIN{FS=","} ($1==dag) {print $3}' ${TMPDIR}/active)
-    njobs=$(awk -v dag=$dag 'BEGIN{FS=","} ($1==dag) {print $4}' ${TMPDIR}/active)
+    dagdir=$(awk -v dagc=$dagc 'BEGIN{FS=","} ($1==dagc) {print $2}' ${TMPDIR}/active)
+    label=$(awk -v dagc=$dagc 'BEGIN{FS=","} ($1==dagc) {print $3}' ${TMPDIR}/active)
+    njobs=$(awk -v dagc=$dagc 'BEGIN{FS=","} ($1==dagc) {print $4}' ${TMPDIR}/active)
     ndone=$(find "$dagdir" -maxdepth 2 -type f -name "results.mat"|wc -l)
     pdone=$(awk -v dividend="${ndone}" -v divisor="${njobs}" 'BEGIN {printf "%.2f", (dividend/divisor)*100; exit(0)}')
-    sed -i.bak "s:^${dag}.*:${dag},${dagdir},${label},${njobs},${ndone},${nidle},${nactive},${nhold}:" $TMPDIR/active
+    sed -i.bak "s:^${dagc}.*:${dagc},${dagdir},${label},${njobs},${ndone},${nidle},${nactive},${nhold}:" $TMPDIR/active
   fi
   printf "%8d%16s%8d%8d%8d%8d%8d%8.2f%%\n" "$dagc" "$label" "$nidle" "$nactive" "$nhold" "$njobs" "$ndone" "${pdone}"
 done
