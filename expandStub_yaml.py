@@ -52,7 +52,7 @@ for field in ToExpand:
 			flength.append(len(ydat[k]))
 
 		if not all([fl==flength[0] for fl in flength]):
-			"condortools:ExpandStub_yaml:error: Linked fields are of different lengths."
+			print "condortools:ExpandStub_yaml:error: Linked fields are of different lengths."
 			sys.exit(1)
 
 		nPerField.append(flength[0])
