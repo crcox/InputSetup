@@ -22,6 +22,7 @@ p = argparse.ArgumentParser()
 p.add_argument('master')
 p.add_argument('-s','--setup_submitfile',action='store_true')
 p.add_argument('-d','--setup_dags',action='store_true')
+p.add_argument('-l','--local_data',action='store_true')
 args = p.parse_args()
 
 PERLBIN = os.path.join(os.path.expanduser('~'),'src','condortools')
@@ -116,20 +117,21 @@ if 'COPY' in ydat[0]:
         # Modify the data paths to point to a local data directory rather than
         # the squid proxy server. This will allow data to be loaded on the
         # machine.
-        for i in xrange(len(ydat)):
-            data = ydat[i][field]
-            if isinstance(data,list):
-                if len(data) > 1:
-                    for ii,d in enumerate(data):
-                        dmod = os.path.basename(d)
-                        ydat[i][field][ii] = dmod
-                else:
-                    dmod = os.path.basename(data[0])
-                    ydat[i][field] = dmod
+        if args.local_data:
+            for i in xrange(len(ydat)):
+                data = ydat[i][field]
+                if isinstance(data,list):
+                    if len(data) > 1:
+                        for ii,d in enumerate(data):
+                            dmod = os.path.basename(d)
+                            ydat[i][field][ii] = dmod
+                    else:
+                        dmod = os.path.basename(data[0])
+                        ydat[i][field] = dmod
 
-            else:
-                dmod = os.path.basename(data)
-                ydat[i][field] = dmod
+                else:
+                    dmod = os.path.basename(data)
+                    ydat[i][field] = dmod
 
     if SharedCOPY:
         data = SharedCOPY
@@ -212,20 +214,21 @@ if 'URLS' in ydat[0]:
         # Modify the data paths to point to a local data directory rather than
         # the squid proxy server. This will allow data to be loaded on the
         # machine.
-        for i in xrange(len(ydat)):
-            data = ydat[i][field]
-            if isinstance(data,list):
-                if len(data) > 1:
-                    for ii,d in enumerate(data):
-                        dmod = os.path.basename(d)
-                        ydat[i][field][ii] = dmod
-                else:
-                    dmod = os.path.basename(data[0])
-                    ydat[i][field] = dmod
+        if args.local_data:
+            for i in xrange(len(ydat)):
+                data = ydat[i][field]
+                if isinstance(data,list):
+                    if len(data) > 1:
+                        for ii,d in enumerate(data):
+                            dmod = os.path.basename(d)
+                            ydat[i][field][ii] = dmod
+                    else:
+                        dmod = os.path.basename(data[0])
+                        ydat[i][field] = dmod
 
-            else:
-                dmod = os.path.basename(data)
-                ydat[i][field] = dmod
+                else:
+                    dmod = os.path.basename(data)
+                    ydat[i][field] = dmod
 
     if SharedURLS:
         URLS = os.path.join(sharedir,'URLS_SHARED')
