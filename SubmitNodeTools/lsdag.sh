@@ -28,7 +28,7 @@ if [ -f "${HOME}/.activedags" ]; then
 fi
 
 echo "Active DAGs:"
-printf "%8s%16s%8s%8s%8s%8s%8s%8s\n" "ID" "Label" "Idle" "Active" "Hold" "NJobs" "Done" "Pct"
+printf "%8s%16s%8s%8s%8s%8s%8s%8s%8s\n" "ID" "Label" "Idle" "Active" "Hold" "NJobs" "Success" "Done" "Pct"
 for dag in $ACTIVEDAGS; do
   dagc=${dag%.0}
   nidle=$(awk -v dagc=$dagc 'BEGIN{FS=",";N=0} ($1==dagc) && ($3==1) {N++} END{print N}' $TMPDIR/condor_q.out)
@@ -38,17 +38,18 @@ for dag in $ACTIVEDAGS; do
     dagdir=$(awk -v dagc=$dagc 'BEGIN{FS=","} ($1==dagc) {print $2}' ${TMPDIR}/active)
     label=$(awk -v dagc=$dagc 'BEGIN{FS=","} ($1==dagc) {print $3}' ${TMPDIR}/active)
     njobs=$(awk -v dagc=$dagc 'BEGIN{FS=","} ($1==dagc) {print $4}' ${TMPDIR}/active)
-    ndone=$(find "$dagdir" -maxdepth 2 -type f -name "results.mat"|wc -l)
+    ndone=$(find "$dagdir" -maxdepth 2 -type f -name "EXIT_STATUS"|wc -l)
+    nsucceed=$(find "$dagdir" -maxdepth 2 -type f -name "EXIT_STATUS"|xargs cat|awk 'BEGIN{n=0}{if ( $1==0 ) {n++}} END{print n}')
     pdone=$(awk -v dividend="${ndone}" -v divisor="${njobs}" 'BEGIN {printf "%.2f", (dividend/divisor)*100; exit(0)}')
     sed -i.bak "s:^${dagc}.*:${dagc},${dagdir},${label},${njobs},${ndone},${nidle},${nactive},${nhold}:" $TMPDIR/active
   fi
-  printf "%8d%16s%8d%8d%8d%8d%8d%8.2f%%\n" "$dagc" "$label" "$nidle" "$nactive" "$nhold" "$njobs" "$ndone" "${pdone}"
+  printf "%8d%16s%8d%8d%8d%8d%8d%8d%8.2f%%\n" "$dagc" "$label" "$nidle" "$nactive" "$nhold" "$njobs" "$nsucceed" "$ndone" "${pdone}"
 done
 if [ -f $TMPDIR/finished ]; then
   echo ""
   echo "Finished DAGs"
   printf "%8s%16s\n" "ID" "Label"
-  awk 'BEGIN{FS=","}{printf "%8d%16s\n" $1, $3}' $TMPDIR/finished
+  awk 'BEGIN{FS=","}{printf "%8d%16s\n", $1, $3}' $TMPDIR/finished
 fi
 
 mv $TMPDIR/active ${HOME}/.activedags
