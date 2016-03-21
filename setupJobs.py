@@ -1,237 +1,186 @@
 #!/usr/bin/env python
-
-import csv
+import argparse
 import json
 import os
-import sys
-from datetime import datetime
-import tarfile
-import shutil
 import pycon
+import shutil
+import subprocess
+import yaml
+from . import utils
+
+p = argparse.ArgumentParser()
+# Required Positional Arguments
+p.add_argument('stub')
+# Flags
+p.add_argument('-d','--setup_dags',action='store_true')
+p.add_argument('-l','--local_data',action='store_true')
+p.add_argument('-s','--setup_submitfile',action='store_true')
+# Options
+p.add_argument('-o','--offset_index',type=int,nargs=1,default=0,help='Number of the first directory to affect/create. Intended to help add jobs to an existing set.')
+p.add_argument('-r','--root_dir',type=str,nargs=1,default='.',help='Directory in which job directories will be constructed.')
+
+args = p.parse_args()
+
+## This is sort of a hack. If condortools is installed somewhere else, the code
+## below will need to be changed.
+PERLBIN = os.path.join(os.path.expanduser('~'),'src','condortools')
+PERLTEMPLATES = os.path.join(os.path.expanduser('~'),'src','condortools','templates')
+
+STUBYAML = args.stub
+OFFSET = args.offset_index
+ROOTDIR = args.root_dir
+
+FLAG_LOCALDATA = args.local_data
+FLAG_SETUPDAG = args.setup_dags
+FLAG_SETUPSUBMIT = args.setup_submitfile
+
+SPECIALFIELDS = ['ExpandFields','URLS','COPY']
+StubAsMaster = False
+
+with open(STUBYAML,'rb') as f:
+    stub = list(yaml.load_all(f))
 
 try:
-    import argparse
-    p = argparse.ArgumentParser()
-    p.add_argument('master')
-    p.add_argument('-r','--run',action='store_true',
-        help="In addition to setting up the directory structure, run all analyses. Useful when the analysis is being done locally.")
-    p.add_argument('-c','--copy_data_src',action='store_true',
-        help="This flag indicates that data and source files should be copied into the shared directory.")
-    args = p.parse_args()
-except ImportError:
-    # Specify type of input associated with argument:
-    #   If you specify an integer, that declares the expected
-    #   number of inputs.
-    #   If you define an empty list, the number of inputs is taken
-    #   to be > 0 but bounded.
-    #   If you specify a logical value, this means that the flag
-    #   takes no inputs, and it's presence will flip this default
-    #   value.
-    pargnames = ['master']
-    argtype = {'run':False}
-
-    # Specify translation from valid flags to valid arguments.
-    flags = {'-r':'run','--r':'run'}
-
-    # Parse the arguments
-    arglst = sys.argv[1:]
-    args = pycon.argparse(arglst, pargnames, argtype, flags)
-
-#############################################################
-#   Load data and parameters from the "master" json file    #
-#############################################################
-jsonfile = args.master
-with open(jsonfile,'rb') as f:
-    jdat = json.load(f)
-
-#############################################################
-#     Set a current config that inherits defaults to be     #
-#        potentially overwritten by individual configs      #
-#############################################################
-try:
-    allConfigs = jdat['config']
+    EXPAND = stub['ExpandFields']
 except KeyError:
-    # This just ensures there is a list to loop over.
-    # The idea is to initialize currentConfig with defaults and then update
-    # those with the paramaters from each config dict.
-    allConfigs = [jdat]
+    print "Stub does not include an ExpandFields list. Treating stub as master..."
+    StubAsMaster = True
 
-#############################################################
-#  Define a root folder (current directory if not a condor  #
-#                           run)                            #
-#############################################################
-rootdir = ''
-try:
-    if jdat['condor']:
-        rootdir = jdat['version']
-except KeyError:
-    pass
-
-#############################################################
-#                 Setup directory structure                 #
-#############################################################
-sharedir = os.path.join(rootdir,'shared')
+sharedir = os.path.join(ROOTDIR,'shared')
 if not os.path.isdir(sharedir):
     os.makedirs(sharedir)
 
-archivedir = os.path.join(rootdir,'archive')
-if not os.path.isdir(archivedir):
-    os.makedirs(archivedir)
-
 #############################################################
-#      Copy shared source and binary files into place       #
+#         Copy files to be shared into ./shared             #
 #############################################################
-if args.copy_data_src:
-    try:
-        shutil.copy(jdat['binary'],sharedir)
-    except KeyError:
-        print "No shared binary indicated."
-
-    try:
-        if isinstance(jdat['srcdir'], list):
-            srclst = jdat['srcdir']
-        else:
-            srclst = [jdat['srcdir']]
-
-        for srcdir in srclst:
-            src_files = os.listdir(srcdir)
-            for file_name in src_files:
-                full_file_name = os.path.join(srcdir, file_name)
-                if (os.path.isfile(full_file_name)):
-                    shutil.copy(full_file_name, sharedir)
-    except KeyError:
-        print "No shared source directory indicated."
-
-#############################################################
-#       Copy shared data / Write shared URLS file           #
-#############################################################
-URLS = os.path.join(sharedir,'URLS_SHARED')
-try:
-    if isinstance(jdat['data'],list):
-        datalst = jdat['data']
-        jdat['data'] = [os.path.split(x)[1] for x in jdat['data']]
+# After copying, the file path is updated so that the
+# executable will reference the copied version of the file. If
+# FLAG_LOCALDATA is True, then the path will be set to look
+# for the file in the job's current directory. This is for jobs
+# that run on HTCondor, since all files are transfered into the
+# job directory (directories themselves are not transfered).
+COPY_shared = [field for field in stub['COPY'] if field not in EXPAND]
+for field in COPY_shared:
+    source = stub[field]
+    if isinstance(stub[field],list):
+        SourceList = source
+        for iSource,source in enumerate(SourceList):
+            target = os.path.join(sharedir,os.path.basename(source))
+            shutil.copyfile(source, target)
+            if FLAG_LOCALDATA:
+                stub[field][iSource] = os.path.basename(target)
+            else:
+                stub[field][iSource] = os.path.join('..',target)
     else:
-        datalst = [jdat['data']]
-        jdat['data'] = os.path.split(jdat['data'])[1]
+        target = os.path.join(sharedir,os.path.basename(source))
+        shutil.copyfile(source, target)
+        stub[field][iSource] = os.path.join('..',target)
+        if FLAG_LOCALDATA:
+            stub[field] = os.path.basename(target)
+        else:
+            stub[field] = os.path.join('..',target)
 
+###############################################################
+# Log files that all jobs will pull from SQUID in URLS_SHARED #
+###############################################################
+# After logging, the file path will be updated so that the
+# executable will look for the file in the job's current
+# directory. HTCondor transfers all files into the job directory
+# and does not transfer directories, themselves.
+URLS_shared = [field for field in stub['URLS'] if field not in EXPAND]
+for field in URLS_shared:
+    URLS = os.path.join(sharedir,'URLS_SHARED')
     with open(URLS,'w') as f:
-        for x in datalst:
-            pathparts = x.split(os.sep)
-            if x[:6] == '/squid':
-                p = os.path.join('/',*pathparts[2:])
-                f.write(p+'\n')
-            else:
-                if args.copy_data_src:
-                    shutil.copy(x,sharedir)
-except KeyError:
-    print "No shared data files indicated."
+        if isinstance(stub[field],list):
+            SourceList = stub[field]
+            for source in SourceList:
+                f.write(source+'\n')
+                stub[field][iSource] = os.path.basename(target)
+        else:
+            source = stub[field]
+            f.write(source+'\n')
+            stub[field] = os.path.basename(target)
 
-try:
-    if isinstance(jdat['metadata'],list):
-        datalst = jdat['metadata']
-        jdat['metadata'] = [os.path.split(x)[1] for x in jdat['metadata']]
-    else:
-        datalst = [jdat['metadata']]
-        jdat['metadata'] = os.path.split(jdat['metadata'])[1]
+if StubAsMaster:
+    master = stub
+else:
+    master = pycon.expand_stub(stub)
+    print "Writing master.yaml..."
+    with open('master.yaml', 'w') as f:
+        yaml.dump_all(configs, f)
 
-    with open(URLS,'a') as f:
-        for x in datalst:
-            pathparts = x.split(os.sep)
-            if x[:6] == '/squid':
-                p = os.path.join('/',*pathparts[2:])
-                f.write(p+'\n')
-            else:
-                if args.copy_data_src:
-                    shutil.copy(x,sharedir)
-except KeyError:
-    print "No shared metadata indicated."
 
 #############################################################
-#        Loop over configs (if condor, do setup only)       #
+#              Setup individual jobs structure              #
 #############################################################
-for i, cfg in enumerate(allConfigs):
-    # Reset to defaults on each loop
-    currentConfig = jdat.copy()
-    try:
-        # Strip out the config list if it exists
-        del currentConfig['config']
-    except KeyError:
-        pass
-
-    # Update defaults with the new config data
-    currentConfig.update(cfg)
-
-    jobdir = os.path.join(rootdir,'{cfgnum:03d}'.format(cfgnum=i))
-    os.makedirs(jobdir)
-
-    cfgfile = os.path.join(jobdir,'params.json')
+njobs = len(master)
+print "Composing {njobs:d} individual jobs...".format(njobs=njobs)
+width = ndigits(njobs-1)
+JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in xrange(N)]
+COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
+URLS_uniq = [field for field in stub['URLS'] if field in EXPAND]
+for iJob,config in enumerate(master):
+    p = (iJob+1)/njobs
+    print "\r[{bar:20s}] {pct:.1f}".format(bar='#'*(p*20), pct=p*100),
+    if not os.path.isdir(JobDirs[iJob]):
+        os.makedirs(JobDirs[iJob])
+    #############################################################
+    #                       Copy files                          #
+    #############################################################
+    for field in COPY_uniq:
+        if isinstance(config[field], list):
+            SourceList = config[field]
+            for iSource,source in enumerate(SourceList):
+                target = os.path.join(JobDirs[iJob],os.path.basename(source))
+                shutil.copyfile(source, target)
+                config[field][iSource] = os.path.basename(target)
+        else:
+            target = os.path.join(JobDirs[iJob],os.path.basename(source))
+            shutil.copyfile(source, target)
+            config[field] = os.path.basename(target)
 
     #############################################################
-    #       Copy job source and binary files into place         #
+    #                    Write URLS files                       #
     #############################################################
-    if args.copy_data_src:
-        try:
-            shutil.copy(cfg['binary'],sharedir)
-        except KeyError:
-            pass
-
-        try:
-            if isinstance(jdat['srcdir'], list):
-                srclst = jdat['srcdir']
+    URLS = os.path.join(JobDirs[iJob],'URLS')
+    with open(URLS,'w') as f:
+        for field in URLS_uniq:
+            if isinstance(config[field], list):
+                SourceList = config[field]
+                for source in SourceList:
+                    source_stripped = utils.lstrip_pattern(source,'/squid')
+                    f.write(source_stripped +'\n')
+                    config[field][iSource] = os.path.basename(target)
             else:
-                srclst = [jdat['srcdir']]
-
-            for srcdir in srclst:
-                src_files = os.listdir(srcdir)
-                for file_name in src_files:
-                    full_file_name = os.path.join(srcdir, file_name)
-                    if (os.path.isfile(full_file_name)):
-                        shutil.copy(full_file_name, sharedir)
-        except KeyError:
-            pass
+                source = config[field]
+                source_stripped = utils.lstrip_pattern(source,'/squid')
+                f.write(source_stripped +'\n')
+                config[field][iSource] = os.path.basename(target)
 
     #############################################################
-    #          Copy job data / Write shared URLS file           #
+    #           Distribute params.json file to each job         #
     #############################################################
-    URLS = os.path.join(jobdir,'URLS')
-    try:
-        if isinstance(cfg['data'],list):
-            datalst = cfg['data']
-            currentConfig['data'] = [os.path.split(x)[1] for x in cfg['data']]
-        else:
-            datalst = [cfg['data']]
-            currentConfig['data'] = os.path.split(cfg['data'])[1]
+    paramfile = os.path.join(JobDirs[iJob],'params.json')
+    del config['COPY']
+    del config['URLS']
+    with open(paramfile, 'w') as f:
+        json.dump(config, f, sort_keys = True, indent = 4)
 
-        with open(URLS,'w') as f:
-            for x in datalst:
-                pathparts = x.split(os.sep)
-                if x[:6] == '/squid':
-                    p = os.path.join('/',*pathparts[2:])
-                    f.write(p+'\n')
-                else:
-                    if args.copy_data_src:
-                        shutil.copy(x,sharedir)
-    except KeyError:
-        pass
+#############################################################
+#          Perform other optional setup operations          #
+#############################################################
+# These require perl and probably additional system configuration.
+if FLAG_SETUPDAG:
+    FillDAGTemplate = [
+            os.path.join(PERLBIN,'FillDAGTemplate.pl'),
+            os.path.join(PERLTEMPLATES,'subdag.template'),
+            str(len(master))]
+    subprocess.call(FillDAGTemplate)
 
-    try:
-        if isinstance(cfg['metadata'],list):
-            datalst = cfg['metadata']
-            currentConfig['metadata'] = [os.path.split(x)[1] for x in cfg['metadata']]
-        else:
-            datalst = [cfg['metadata']]
-            currentConfig['metadata'] = os.path.split(cfg['metadata'])[1]
-
-        with open(URLS,'a') as f:
-            for x in datalst:
-                pathparts = x.split(os.sep)
-                if x[:6] == '/squid':
-                    p = os.path.join('/',*pathparts[2:])
-                    f.write(p+'\n')
-                else:
-                    shutil.copy(x,sharedir)
-    except KeyError:
-        pass
-
-    with open(cfgfile,'wb') as f:
-        json.dump(currentConfig, f, sort_keys=True, indent=2, separators=(',', ': '))
+if FLAG_SETUPSUBMIT:
+    FillProcessTemplate = [
+            os.path.join(PERLBIN,'FillProcessTemplate.pl'),
+            os.path.join(PERLTEMPLATES,'process.template'),
+            str(len(master)),
+            os.path.join('process.yaml')]
+    subprocess.call(FillProcessTemplate)
