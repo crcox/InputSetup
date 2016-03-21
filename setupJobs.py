@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import progress.bar
 import pycon
 import pycon.utils
 import shutil
@@ -15,6 +16,7 @@ p.add_argument('stub')
 p.add_argument('-d','--setup_dags',action='store_true')
 p.add_argument('-l','--local_data',action='store_true')
 p.add_argument('-s','--setup_submitfile',action='store_true')
+p.add_argument('-m','--write_master',action='store_true')
 # Options
 p.add_argument('-o','--offset_index',type=int,nargs=1,default=0,help='Number of the first directory to affect/create. Intended to help add jobs to an existing set.')
 p.add_argument('-r','--root_dir',type=str,nargs=1,default='.',help='Directory in which job directories will be constructed.')
@@ -33,12 +35,13 @@ ROOTDIR = args.root_dir
 FLAG_LOCALDATA = args.local_data
 FLAG_SETUPDAG = args.setup_dags
 FLAG_SETUPSUBMIT = args.setup_submitfile
+FLAG_WRITEMASTER = args.write_master
 
 SPECIALFIELDS = ['ExpandFields','URLS','COPY']
 StubAsMaster = False
 
 with open(STUBYAML,'rb') as f:
-    stub = list(yaml.load(f))
+    stub = yaml.load(f)
 
 try:
     EXPAND = stub['ExpandFields']
@@ -61,24 +64,23 @@ if not os.path.isdir(sharedir):
 # job directory (directories themselves are not transfered).
 COPY_shared = [field for field in stub['COPY'] if field not in EXPAND]
 for field in COPY_shared:
-    source = stub[field]
     if isinstance(stub[field],list):
-        SourceList = source
+        SourceList = stub[field]
         for iSource,source in enumerate(SourceList):
             target = os.path.join(sharedir,os.path.basename(source))
             shutil.copyfile(source, target)
             if FLAG_LOCALDATA:
                 stub[field][iSource] = os.path.basename(target)
             else:
-                stub[field][iSource] = os.path.join('..',target)
+                stub[field][iSource] = os.path.normpath(os.path.join('..',sharedir,os.path.basename(target)))
     else:
+        source = stub[field]
         target = os.path.join(sharedir,os.path.basename(source))
         shutil.copyfile(source, target)
-        stub[field][iSource] = os.path.join('..',target)
         if FLAG_LOCALDATA:
             stub[field] = os.path.basename(target)
         else:
-            stub[field] = os.path.join('..',target)
+            stub[field] = os.path.normpath(os.path.join('..',sharedir,os.path.basename(target)))
 
 ###############################################################
 # Log files that all jobs will pull from SQUID in URLS_SHARED #
@@ -88,26 +90,28 @@ for field in COPY_shared:
 # directory. HTCondor transfers all files into the job directory
 # and does not transfer directories, themselves.
 URLS_shared = [field for field in stub['URLS'] if field not in EXPAND]
-for field in URLS_shared:
-    URLS = os.path.join(sharedir,'URLS_SHARED')
-    with open(URLS,'w') as f:
+URLS = os.path.join(sharedir,'URLS_SHARED')
+with open(URLS,'w') as f:
+    for field in URLS_shared:
         if isinstance(stub[field],list):
             SourceList = stub[field]
-            for source in SourceList:
+            for iSource,source in enumerate(SourceList):
                 f.write(source+'\n')
-                stub[field][iSource] = os.path.basename(target)
+                stub[field][iSource] = os.path.basename(source)
         else:
             source = stub[field]
             f.write(source+'\n')
-            stub[field] = os.path.basename(target)
+            stub[field] = os.path.basename(source)
 
 if StubAsMaster:
     master = stub
 else:
     master = pycon.expand_stub(stub)
+
+if FLAG_WRITEMASTER:
     print "Writing master.yaml..."
     with open('master.yaml', 'w') as f:
-        yaml.dump_all(configs, f)
+        yaml.dump_all(master, f)
 
 
 #############################################################
@@ -115,13 +119,12 @@ else:
 #############################################################
 njobs = len(master)
 print "Composing {njobs:d} individual jobs...".format(njobs=njobs)
-width = ndigits(njobs-1)
-JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in xrange(N)]
+width = pycon.utils.ndigits(njobs-1)
+JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in xrange(njobs)]
 COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
 URLS_uniq = [field for field in stub['URLS'] if field in EXPAND]
+bar = progress.bar.ShadyBar('', max=njobs)
 for iJob,config in enumerate(master):
-    p = (iJob+1)/njobs
-    print "\r[{bar:20s}] {pct:.1f}".format(bar='#'*(p*20), pct=p*100),
     if not os.path.isdir(JobDirs[iJob]):
         os.makedirs(JobDirs[iJob])
     #############################################################
@@ -135,6 +138,7 @@ for iJob,config in enumerate(master):
                 shutil.copyfile(source, target)
                 config[field][iSource] = os.path.basename(target)
         else:
+            source = config[field]
             target = os.path.join(JobDirs[iJob],os.path.basename(source))
             shutil.copyfile(source, target)
             config[field] = os.path.basename(target)
@@ -150,12 +154,12 @@ for iJob,config in enumerate(master):
                 for source in SourceList:
                     source_stripped = utils.lstrip_pattern(source,'/squid')
                     f.write(source_stripped +'\n')
-                    config[field][iSource] = os.path.basename(target)
+                    config[field][iSource] = os.path.basename(source)
             else:
                 source = config[field]
                 source_stripped = utils.lstrip_pattern(source,'/squid')
                 f.write(source_stripped +'\n')
-                config[field][iSource] = os.path.basename(target)
+                config[field][iSource] = os.path.basename(source)
 
     #############################################################
     #           Distribute params.json file to each job         #
@@ -165,12 +169,15 @@ for iJob,config in enumerate(master):
     del config['URLS']
     with open(paramfile, 'w') as f:
         json.dump(config, f, sort_keys = True, indent = 4)
+    bar.next()
+bar.finish()
 
 #############################################################
 #          Perform other optional setup operations          #
 #############################################################
 # These require perl and probably additional system configuration.
 if FLAG_SETUPDAG:
+    print "Writing DAG files..."
     FillDAGTemplate = [
             os.path.join(PERLBIN,'FillDAGTemplate.pl'),
             os.path.join(PERLTEMPLATES,'subdag.template'),
@@ -178,9 +185,11 @@ if FLAG_SETUPDAG:
     subprocess.call(FillDAGTemplate)
 
 if FLAG_SETUPSUBMIT:
+    print "Writing submit files..."
     FillProcessTemplate = [
             os.path.join(PERLBIN,'FillProcessTemplate.pl'),
             os.path.join(PERLTEMPLATES,'process.template'),
             str(len(master)),
             os.path.join('process.yaml')]
     subprocess.call(FillProcessTemplate)
+print "Done."

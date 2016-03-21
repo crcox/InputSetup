@@ -1,4 +1,5 @@
 from . import utils
+import operator
 def expand_stub(stub):
     EXPAND = stub['ExpandFields']
     del stub['ExpandFields']
@@ -19,7 +20,7 @@ def expand_stub(stub):
 
             nPerField.append(n)
 
-    N = reduce(mul, nPerField, 1)
+    N = reduce(operator.mul, nPerField, 1)
 
     master = [dict(stub) for i in xrange(N)]
     for i in xrange(N):
