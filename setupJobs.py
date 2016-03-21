@@ -38,7 +38,7 @@ SPECIALFIELDS = ['ExpandFields','URLS','COPY']
 StubAsMaster = False
 
 with open(STUBYAML,'rb') as f:
-    stub = list(yaml.load_all(f))
+    stub = list(yaml.load(f))
 
 try:
     EXPAND = stub['ExpandFields']
