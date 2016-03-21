@@ -2,13 +2,15 @@
 import argparse
 import json
 import os
-import progress.bar
 import pycon
 import pycon.utils
 import shutil
 import subprocess
 import yaml
-
+try:
+    import progress.bar
+except ImportError
+    pass
 p = argparse.ArgumentParser()
 # Required Positional Arguments
 p.add_argument('stub')
@@ -123,7 +125,10 @@ width = pycon.utils.ndigits(njobs-1)
 JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in xrange(njobs)]
 COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
 URLS_uniq = [field for field in stub['URLS'] if field in EXPAND]
-bar = progress.bar.ShadyBar('', max=njobs)
+try:
+    bar = progress.bar.ShadyBar('', max=njobs)
+except NameError:
+    pass
 for iJob,config in enumerate(master):
     if not os.path.isdir(JobDirs[iJob]):
         os.makedirs(JobDirs[iJob])
@@ -169,8 +174,15 @@ for iJob,config in enumerate(master):
     del config['URLS']
     with open(paramfile, 'w') as f:
         json.dump(config, f, sort_keys = True, indent = 4)
-    bar.next()
-bar.finish()
+    try:
+        bar.next()
+    except NameError:
+        pass
+
+try:
+    bar.finish()
+except NameError:
+    pass
 
 #############################################################
 #          Perform other optional setup operations          #
