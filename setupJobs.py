@@ -3,10 +3,10 @@ import argparse
 import json
 import os
 import pycon
+import pycon.utils
 import shutil
 import subprocess
 import yaml
-from . import utils
 
 p = argparse.ArgumentParser()
 # Required Positional Arguments
