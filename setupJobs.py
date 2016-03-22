@@ -2,24 +2,32 @@
 import argparse
 import json
 import os
+import pkg_resources
 import pycon
 import pycon.utils
 import shutil
 import subprocess
 import yaml
+from mako.template import Template
 try:
     import progress.bar
-except ImportError
+except ImportError:
     pass
+
+resource_package = 'pycon';
+resource_path_dag = os.path.join('templates','process.mako')
+dag_template_filename = pkg_resources.resource_string(resource_package, resource_path_dag)
+resource_path_submit = os.path.join('templates','subdag.mako')
+submit_template_filename = pkg_resources.resource_string(resource_package, resource_path_submit)
+
 p = argparse.ArgumentParser()
 # Required Positional Arguments
 p.add_argument('stub')
 # Flags
-p.add_argument('-d','--setup_dags',action='store_true')
 p.add_argument('-l','--local_data',action='store_true')
-p.add_argument('-s','--setup_submitfile',action='store_true')
 p.add_argument('-m','--write_master',action='store_true')
 # Options
+p.add_argument('-d','--dag_setup',type=str,default='',help="Provide config file for submit and dag files.")
 p.add_argument('-o','--offset_index',type=int,nargs=1,default=0,help='Number of the first directory to affect/create. Intended to help add jobs to an existing set.')
 p.add_argument('-r','--root_dir',type=str,nargs=1,default='.',help='Directory in which job directories will be constructed.')
 
@@ -31,13 +39,19 @@ PERLBIN = os.path.join(os.path.expanduser('~'),'src','condortools')
 PERLTEMPLATES = os.path.join(os.path.expanduser('~'),'src','condortools','templates')
 
 STUBYAML = args.stub
+SUBMITYAML = args.dag_setup
 OFFSET = args.offset_index
 ROOTDIR = args.root_dir
 
 FLAG_LOCALDATA = args.local_data
-FLAG_SETUPDAG = args.setup_dags
-FLAG_SETUPSUBMIT = args.setup_submitfile
 FLAG_WRITEMASTER = args.write_master
+
+if SUBMITYAML:
+    FLAG_SETUPDAG = True
+    with open(SUBMITYAML,'rb') as f:
+        ProcessInfo = yaml.load(f)
+else:
+    FLAG_SETUPDAG = False
 
 SPECIALFIELDS = ['ExpandFields','URLS','COPY']
 StubAsMaster = False
@@ -129,9 +143,9 @@ try:
     bar = progress.bar.ShadyBar('', max=njobs)
 except NameError:
     pass
-for iJob,config in enumerate(master):
-    if not os.path.isdir(JobDirs[iJob]):
-        os.makedirs(JobDirs[iJob])
+for iJob,config in zip(JobDirs,master):
+    if not os.path.isdir(iJob):
+        os.makedirs(iJob)
     #############################################################
     #                       Copy files                          #
     #############################################################
@@ -139,19 +153,19 @@ for iJob,config in enumerate(master):
         if isinstance(config[field], list):
             SourceList = config[field]
             for iSource,source in enumerate(SourceList):
-                target = os.path.join(JobDirs[iJob],os.path.basename(source))
+                target = os.path.join(iJob,os.path.basename(source))
                 shutil.copyfile(source, target)
                 config[field][iSource] = os.path.basename(target)
         else:
             source = config[field]
-            target = os.path.join(JobDirs[iJob],os.path.basename(source))
+            target = os.path.join(iJob,os.path.basename(source))
             shutil.copyfile(source, target)
             config[field] = os.path.basename(target)
 
     #############################################################
     #                    Write URLS files                       #
     #############################################################
-    URLS = os.path.join(JobDirs[iJob],'URLS')
+    URLS = os.path.join(iJob,'URLS')
     with open(URLS,'w') as f:
         for field in URLS_uniq:
             if isinstance(config[field], list):
@@ -167,9 +181,25 @@ for iJob,config in enumerate(master):
                 config[field][iSource] = os.path.basename(source)
 
     #############################################################
+    #          Setup DAG and SUBMIT files for condor            #
+    #############################################################
+    if FLAG_SETUPDAG:
+        dag_template = Template(filename=dag_template_filename)
+        dag_text = dag_template.render(UNIQUE=iJob,JOBDIR='./',SUBMITFILE='./process.sub')
+        dag_filename = os.path.join(iJob,"{j:s}.dag".format(j=iJob))
+        with open(dag_filename,'w') as f:
+            f.write(dag_text)
+
+        submit_template = Template(filename=submit_template_filename)
+        submit_text = submit_template.render(ProcessInfo=ProcessInfo)
+        submit_filename = os.path.join(iJob,"process.sub")
+        with open(dag_filename,'w') as f:
+            f.write(dag_text)
+
+    #############################################################
     #           Distribute params.json file to each job         #
     #############################################################
-    paramfile = os.path.join(JobDirs[iJob],'params.json')
+    paramfile = os.path.join(iJob,'params.json')
     del config['COPY']
     del config['URLS']
     with open(paramfile, 'w') as f:
@@ -179,29 +209,16 @@ for iJob,config in enumerate(master):
     except NameError:
         pass
 
+if FLAG_SETUPDAG:
+    with open('./sweep.dag','w') as f:
+        if os.path.isfile('./dagman.cfg'):
+            f.write('CONFIG ./dagman.cfg\n')
+        for iJob in JobDirs:
+            "SPLICE {j:s} ./{j:s}/{j:s}.dag\n".format(j=iJob)
+
 try:
     bar.finish()
 except NameError:
     pass
 
-#############################################################
-#          Perform other optional setup operations          #
-#############################################################
-# These require perl and probably additional system configuration.
-if FLAG_SETUPDAG:
-    print "Writing DAG files..."
-    FillDAGTemplate = [
-            os.path.join(PERLBIN,'FillDAGTemplate.pl'),
-            os.path.join(PERLTEMPLATES,'subdag.template'),
-            str(len(master))]
-    subprocess.call(FillDAGTemplate)
-
-if FLAG_SETUPSUBMIT:
-    print "Writing submit files..."
-    FillProcessTemplate = [
-            os.path.join(PERLBIN,'FillProcessTemplate.pl'),
-            os.path.join(PERLTEMPLATES,'process.template'),
-            str(len(master)),
-            os.path.join('process.yaml')]
-    subprocess.call(FillProcessTemplate)
 print "Done."
