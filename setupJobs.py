@@ -15,10 +15,10 @@ except ImportError:
     pass
 
 resource_package = 'pycon';
-resource_path_dag = os.path.join('templates','process.mako')
-dag_template_filename = pkg_resources.resource_string(resource_package, resource_path_dag)
-resource_path_submit = os.path.join('templates','subdag.mako')
-submit_template_filename = pkg_resources.resource_string(resource_package, resource_path_submit)
+resource_path_dag = os.path.join('templates','subdag.mako')
+dag_template_string = pkg_resources.resource_string(resource_package, resource_path_dag)
+resource_path_submit = os.path.join('templates','process.mako')
+submit_template_string = pkg_resources.resource_string(resource_package, resource_path_submit)
 
 p = argparse.ArgumentParser()
 # Required Positional Arguments
@@ -50,6 +50,13 @@ if SUBMITYAML:
     FLAG_SETUPDAG = True
     with open(SUBMITYAML,'rb') as f:
         ProcessInfo = yaml.load(f)
+
+    if not 'PRESCRIPT' in ProcessInfo:
+        ProcessInfo['PRESCRIPT'] = ''
+
+    if not 'POSTSCRIPT' in ProcessInfo:
+        ProcessInfo['POSTSCRIPT'] = ''
+
 else:
     FLAG_SETUPDAG = False
 
@@ -155,10 +162,10 @@ for iJob,config in zip(JobDirs,master):
             for iSource,source in enumerate(SourceList):
                 target = os.path.join(iJob,os.path.basename(source))
                 shutil.copyfile(source, target)
-                config[field][iSource] = os.path.basename(target)
         else:
             source = config[field]
             target = os.path.join(iJob,os.path.basename(source))
+            config[field][iSource] = os.path.basename(target)
             shutil.copyfile(source, target)
             config[field] = os.path.basename(target)
 
@@ -184,14 +191,14 @@ for iJob,config in zip(JobDirs,master):
     #          Setup DAG and SUBMIT files for condor            #
     #############################################################
     if FLAG_SETUPDAG:
-        dag_template = Template(filename=dag_template_filename)
-        dag_text = dag_template.render(UNIQUE=iJob,JOBDIR='./',SUBMITFILE='./process.sub')
+        dag_template = Template(dag_template_string)
+        dag_text = dag_template.render(UNIQUE=iJob[2:],JOBDIR='./',SUBMITFILE='./process.sub',PRESCRIPT=ProcessInfo['PRESCRIPT'],POSTSCRIPT=ProcessInfo['POSTSCRIPT'])
         dag_filename = os.path.join(iJob,"{j:s}.dag".format(j=iJob))
         with open(dag_filename,'w') as f:
             f.write(dag_text)
 
-        submit_template = Template(filename=submit_template_filename)
-        submit_text = submit_template.render(ProcessInfo=ProcessInfo)
+        submit_template = Template(submit_template_string)
+        submit_text = submit_template.render(ProcessInfo=ProcessInfo,UNIQUE=iJob[2:],JOBDIR=iJob)
         submit_filename = os.path.join(iJob,"process.sub")
         with open(dag_filename,'w') as f:
             f.write(dag_text)

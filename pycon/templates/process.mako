@@ -1,15 +1,58 @@
 <%
-  FLOCK=ProcessInfo['FLOCK']
-  GLIDE=ProcessInfo['GLIDE']
-  SHAREDIR=ProcessInfo['SHAREDIR']
-  WRAPPER=ProcessInfo['WRAPPER']
-  EXECUTABLE=ProcessInfo['EXECUTABLE']
-  PRESCRIPT=ProcessInfo['PRESCRIPT']
-  POSTSCRIPT=ProcessInfo['POSTSCRIPT']
-  execPArgs=ProcessInfo['execPArgs']
-  execKVArgs=ProcessInfo['execKVArgs']
-  request_memory=ProcessInfo['request_memory']
-  request_disk=ProcessInfo['request_disk']
+  if ProcessInfo['FLOCK']:
+    FLOCK=ProcessInfo['FLOCK']
+  else:
+    FLOCK=False
+
+  if ProcessInfo['GLIDE']:
+    GLIDE=ProcessInfo['GLIDE']
+  else:
+    GLIDE=False
+
+  if ProcessInfo['SHAREDIR']:
+    SHAREDIR=ProcessInfo['SHAREDIR']
+  else:
+    SHAREDIR='./shared'
+
+  if ProcessInfo['WRAPPER']:
+    WRAPPER=ProcessInfo['WRAPPER']
+  else:
+    WRAPPER=''
+
+  if ProcessInfo['EXECUTABLE']:
+    EXECUTABLE=ProcessInfo['EXECUTABLE']
+  else:
+    EXECUTABLE=''
+
+  if ProcessInfo['PRESCRIPT']:
+    PRESCRIPT=ProcessInfo['PRESCRIPT']
+  else:
+    PRESCRIPT=''
+
+  if ProcessInfo['POSTSCRIPT']:
+    POSTSCRIPT=ProcessInfo['POSTSCRIPT']
+  else:
+    POSTSCRIPT=''
+
+  if ProcessInfo['request_memory']:
+    request_memory=ProcessInfo['request_memory']
+  else:
+    request_memory='0KB'
+
+  if ProcessInfo['request_disk']:
+    request_disk=ProcessInfo['request_disk']
+  else:
+    request_disk='0KB'
+
+  if ProcessInfo['execPArgs']:
+    execPArgs=ProcessInfo['execPArgs']
+  else:
+    execPArgs=[]
+
+  if ProcessInfo['execKVArgs']:
+    execKVArgs=ProcessInfo['execKVArgs']
+  else:
+    execKVArgs=[]
 %>
 # MAKE SURE TO CHANGE THE FIRST SECTION BELOW FOR EACH NEW SUBMISSION!!!
 #
@@ -63,11 +106,11 @@ log = process.log
 # Tell us the versien of R or Matlab you are using. Place it
 # in the JobAd. Choose one. Or comment both if it is some other
 # kind of program.
-#+${TYPE}="${VERSION}"
+<%text>#+${TYPE}="${VERSION}"</%text>
 # Arguments to the wrapper script.  Of note is the last one, --, anything
 # after this goes direct to your R, Matlab or Other code.
 # This gets augmented for you by mkdag.pl. Choose R or Matlab
-arguments = ${EXECUTABLE} ${JOB} -- ${join_with_spaces(execPArgs)} ${join_with_spaces(execKVArgs)}
+arguments = ${EXECUTABLE} ${UNIQUE} -- ${join_with_spaces(execPArgs)} ${join_with_spaces(execKVArgs)}
 
 # Release a job from being on hold hold after half an hour (1800 seconds), up to 4 times,
 # as long as the executable could be started, the input files and initial directory
@@ -90,22 +133,22 @@ transfer_input_files = ${JOBDIR}/, ${SHAREDIR}/
 
 
 queue
-<%def name="join_with_spaces(args)"%>
+<%def name="join_with_spaces(args)">
   <%
     line = []
-    if isinstance(args,dict):
+    try:
       for k,v in args.items():
         line.extend([k,v])
 
-    else:
-      v in args:
+    except AttributeError:
+      for v in args:
         line.append(v)
 
     output = ' '.join(str(x) for x in line)
   %>
 ${output}
 </%def>
-<%def name="size_conversion(x, convert_to)"%>
+<%def name="size_conversion(x, convert_to)">
   <%
     UNITSIZE={'KB':10e3,'MB':10e6,'GB':10e9}
     n=int(x[:-2])
