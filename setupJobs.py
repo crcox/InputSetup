@@ -48,6 +48,8 @@ FLAG_WRITEMASTER = args.write_master
 
 if SUBMITYAML:
     FLAG_SETUPDAG = True
+    dag_template = Template(dag_template_string)
+    submit_template = Template(submit_template_string)
     with open(SUBMITYAML,'rb') as f:
         ProcessInfo = yaml.load(f)
 
@@ -191,13 +193,11 @@ for iJob,config in zip(JobDirs,master):
     #          Setup DAG and SUBMIT files for condor            #
     #############################################################
     if FLAG_SETUPDAG:
-        dag_template = Template(dag_template_string)
         dag_text = dag_template.render(UNIQUE=iJob[2:],JOBDIR='./',SUBMITFILE='./process.sub',PRESCRIPT=ProcessInfo['PRESCRIPT'],POSTSCRIPT=ProcessInfo['POSTSCRIPT'])
         dag_filename = os.path.join(iJob,"{j:s}.dag".format(j=iJob))
         with open(dag_filename,'w') as f:
             f.write(dag_text)
 
-        submit_template = Template(submit_template_string)
         submit_text = submit_template.render(ProcessInfo=ProcessInfo,UNIQUE=iJob[2:],JOBDIR=iJob)
         submit_filename = os.path.join(iJob,"process.sub")
         with open(dag_filename,'w') as f:

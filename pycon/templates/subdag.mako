@@ -1,3 +1,4 @@
+<%page args="UNIQUE,JOBDIR,SUBMITFILE,PRESCRIPT='',POSTSCRIPT=''" cached="True" cache_type="memory"/>
 JOB ${UNIQUE} ${SUBMITFILE} ${JOBDIR}
 % if PRESCRIPT:
 SCRIPT PRE ${UNIQUE} ${PRESCRIPT}

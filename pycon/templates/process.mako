@@ -1,3 +1,4 @@
+<%page args="ProcessInfo,UNIQUE,JOBDIR" cached="True" cache_type="memory"/>
 <%
   if ProcessInfo['FLOCK']:
     FLOCK=ProcessInfo['FLOCK']
