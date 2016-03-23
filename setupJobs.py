@@ -69,7 +69,7 @@ with open(STUBYAML,'rb') as f:
     stub = yaml.load(f)
 
 try:
-    EXPAND = stub['ExpandFields']
+    EXPAND = pycon.utils.flatten(stub['ExpandFields'])
 except KeyError:
     print "Stub does not include an ExpandFields list. Treating stub as master..."
     StubAsMaster = True
@@ -180,28 +180,28 @@ for iJob,config in zip(JobDirs,master):
             if isinstance(config[field], list):
                 SourceList = config[field]
                 for source in SourceList:
-                    source_stripped = utils.lstrip_pattern(source,'/squid')
+                    source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
                     f.write(source_stripped +'\n')
                     config[field][iSource] = os.path.basename(source)
             else:
                 source = config[field]
-                source_stripped = utils.lstrip_pattern(source,'/squid')
+                source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
                 f.write(source_stripped +'\n')
-                config[field][iSource] = os.path.basename(source)
+                config[field] = os.path.basename(source)
 
     #############################################################
     #          Setup DAG and SUBMIT files for condor            #
     #############################################################
     if FLAG_SETUPDAG:
-        dag_text = dag_template.render(UNIQUE=iJob[2:],JOBDIR='./',SUBMITFILE='./process.sub',PRESCRIPT=ProcessInfo['PRESCRIPT'],POSTSCRIPT=ProcessInfo['POSTSCRIPT'])
+        dag_text = dag_template.render(UNIQUE=iJob[2:],JOBDIR='./',SUBMITFILE=os.path.abspath(os.path.join(iJob,'process.sub')),PRESCRIPT=ProcessInfo['PRESCRIPT'],POSTSCRIPT=ProcessInfo['POSTSCRIPT'])
         dag_filename = os.path.join(iJob,"{j:s}.dag".format(j=iJob))
         with open(dag_filename,'w') as f:
-            f.write(dag_text)
+            f.write(dag_text.strip())
 
         submit_text = submit_template.render(ProcessInfo=ProcessInfo,UNIQUE=iJob[2:],JOBDIR=iJob)
         submit_filename = os.path.join(iJob,"process.sub")
-        with open(dag_filename,'w') as f:
-            f.write(dag_text)
+        with open(submit_filename,'w') as f:
+            f.write(submit_text.strip())
 
     #############################################################
     #           Distribute params.json file to each job         #
@@ -221,7 +221,8 @@ if FLAG_SETUPDAG:
         if os.path.isfile('./dagman.cfg'):
             f.write('CONFIG ./dagman.cfg\n')
         for iJob in JobDirs:
-            "SPLICE {j:s} ./{j:s}/{j:s}.dag\n".format(j=iJob)
+            subdag_path = os.path.join(iJob,"{d:s}.dag".format(d=iJob[2:]))
+            f.write("SPLICE {j:s} {d:s}\n".format(j=iJob[2:],d=subdag_path))
 
 try:
     bar.finish()

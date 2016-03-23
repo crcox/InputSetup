@@ -1,4 +1,4 @@
-<%page args="ProcessInfo,UNIQUE,JOBDIR" cached="True" cache_type="memory"/>
+<%page args="ProcessInfo,UNIQUE,JOBDIR"/>
 <%
   if ProcessInfo['FLOCK']:
     FLOCK=ProcessInfo['FLOCK']
@@ -13,7 +13,7 @@
   if ProcessInfo['SHAREDIR']:
     SHAREDIR=ProcessInfo['SHAREDIR']
   else:
-    SHAREDIR='./shared'
+    SHAREDIR='../shared'
 
   if ProcessInfo['WRAPPER']:
     WRAPPER=ProcessInfo['WRAPPER']
@@ -62,16 +62,17 @@
 #
 # If your jobs are less than 4 hours long, "flock" them additionally to
 # other HTCondor pools on campus.
-+WantFlocking = ${FLOCK}
++WantFlocking = ${yesno(FLOCK)}
 #
 # If your jobs are less than ~2 hours long, "glide" them to the national
 # Open Science Grid (OSG) for access to even more computers and the
 # fastest overall throughput.
-+WantGlidein = ${GLIDE}
++WantGlidein = ${yesno(GLIDE)}
 #
 # Tell Condor how many CPUs (cores), how much memory (MB) and how much
 # disk space (KB) each job will need:
 request_cpus = 1
+
 request_memory = ${size_conversion(request_memory,'MB')}
 request_disk = ${size_conversion(request_disk,'KB')}
 
@@ -111,7 +112,7 @@ log = process.log
 # Arguments to the wrapper script.  Of note is the last one, --, anything
 # after this goes direct to your R, Matlab or Other code.
 # This gets augmented for you by mkdag.pl. Choose R or Matlab
-arguments = ${EXECUTABLE} ${UNIQUE} -- ${join_with_spaces(execPArgs)} ${join_with_spaces(execKVArgs)}
+arguments = ${EXECUTABLE} ${UNIQUE} -- ${join_with_spaces(execPArgs)|trim} ${join_with_spaces(execKVArgs)|trim}
 
 # Release a job from being on hold hold after half an hour (1800 seconds), up to 4 times,
 # as long as the executable could be started, the input files and initial directory
@@ -125,7 +126,7 @@ arguments = ${EXECUTABLE} ${UNIQUE} -- ${join_with_spaces(execPArgs)} ${join_wit
 notification = never
 
 # This line is completed for you
-transfer_input_files = ${JOBDIR}/, ${SHAREDIR}/
+transfer_input_files = ./, ${SHAREDIR}/
 
 # Leave the below line commented, unless you have a specific need for
 # indicating a group that is not your default.
@@ -134,7 +135,7 @@ transfer_input_files = ${JOBDIR}/, ${SHAREDIR}/
 
 
 queue
-<%def name="join_with_spaces(args)">
+<%def name="join_with_spaces(args)" filter="trim">
   <%
     line = []
     try:
@@ -149,13 +150,20 @@ queue
   %>
 ${output}
 </%def>
-<%def name="size_conversion(x, convert_to)">
+<%def name="size_conversion(x, convert_to)" filter="trim">
   <%
     UNITSIZE={'KB':10e3,'MB':10e6,'GB':10e9}
     n=int(x[:-2])
     unit=x[-2:]
     bytes_ = n*UNITSIZE[unit]
-    output = n/UNITSIZE[convert_to.upper()]
+    output = int(bytes_/UNITSIZE[convert_to.upper()])
   %>
 ${output}
+</%def>
+<%def name="yesno(x)" filter="trim">
+% if x:
+YES
+% else:
+NO
+% endif
 </%def>

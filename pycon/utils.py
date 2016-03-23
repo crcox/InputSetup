@@ -32,3 +32,12 @@ def ndigits(i):
 def lstrip_pattern(string, pattern):
     n=len(pattern)
     return string[n:] if string.startswith(pattern) else string
+
+def flatten(list_of_lists):
+    flat = []
+    for sublist in list_of_lists:
+        if isinstance(sublist,list):
+            flat.extend(sublist)
+        else:
+            flat.append(sublist)
+    return flat
