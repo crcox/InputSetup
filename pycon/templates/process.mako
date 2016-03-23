@@ -62,12 +62,12 @@
 #
 # If your jobs are less than 4 hours long, "flock" them additionally to
 # other HTCondor pools on campus.
-+WantFlocking = ${yesno(FLOCK)}
++WantFlocking = ${FLOCK}
 #
 # If your jobs are less than ~2 hours long, "glide" them to the national
 # Open Science Grid (OSG) for access to even more computers and the
 # fastest overall throughput.
-+WantGlidein = ${yesno(GLIDE)}
++WantGlidein = ${GLIDE}
 #
 # Tell Condor how many CPUs (cores), how much memory (MB) and how much
 # disk space (KB) each job will need:

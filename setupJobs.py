@@ -15,8 +15,8 @@ except ImportError:
     pass
 
 resource_package = 'pycon';
-resource_path_dag = os.path.join('templates','subdag.mako')
-dag_template_string = pkg_resources.resource_string(resource_package, resource_path_dag)
+#resource_path_dag = os.path.join('templates','subdag.mako')
+#dag_template_string = pkg_resources.resource_string(resource_package, resource_path_dag)
 resource_path_submit = os.path.join('templates','process.mako')
 submit_template_string = pkg_resources.resource_string(resource_package, resource_path_submit)
 
@@ -48,7 +48,7 @@ FLAG_WRITEMASTER = args.write_master
 
 if SUBMITYAML:
     FLAG_SETUPDAG = True
-    dag_template = Template(dag_template_string)
+    #dag_template = Template(dag_template_string)
     submit_template = Template(submit_template_string)
     with open(SUBMITYAML,'rb') as f:
         ProcessInfo = yaml.load(f)
@@ -193,10 +193,10 @@ for iJob,config in zip(JobDirs,master):
     #          Setup DAG and SUBMIT files for condor            #
     #############################################################
     if FLAG_SETUPDAG:
-        dag_text = dag_template.render(UNIQUE=iJob[2:],JOBDIR='./',SUBMITFILE=os.path.abspath(os.path.join(iJob,'process.sub')),PRESCRIPT=ProcessInfo['PRESCRIPT'],POSTSCRIPT=ProcessInfo['POSTSCRIPT'])
-        dag_filename = os.path.join(iJob,"{j:s}.dag".format(j=iJob))
-        with open(dag_filename,'w') as f:
-            f.write(dag_text.strip())
+    #    dag_text = dag_template.render(UNIQUE=iJob[2:],JOBDIR='./',SUBMITFILE=os.path.abspath(os.path.join(iJob,'process.sub')),PRESCRIPT=ProcessInfo['PRESCRIPT'],POSTSCRIPT=ProcessInfo['POSTSCRIPT'])
+    #    dag_filename = os.path.join(iJob,"{j:s}.dag".format(j=iJob))
+    #    with open(dag_filename,'w') as f:
+    #        f.write(dag_text.strip())
 
         submit_text = submit_template.render(ProcessInfo=ProcessInfo,UNIQUE=iJob[2:],JOBDIR=iJob)
         submit_filename = os.path.join(iJob,"process.sub")
@@ -221,8 +221,8 @@ if FLAG_SETUPDAG:
         if os.path.isfile('./dagman.cfg'):
             f.write('CONFIG ./dagman.cfg\n')
         for iJob in JobDirs:
-            subdag_path = os.path.join(iJob,"{d:s}.dag".format(d=iJob[2:]))
-            f.write("SPLICE {j:s} {d:s}\n".format(j=iJob[2:],d=subdag_path))
+            submit_basename = "process.sub"
+            f.write("JOB {j:s} {p:s} DIR {d:s}\n".format(j=iJob[2:],p=submit_basename,d=iJob))
 
 try:
     bar.finish()
