@@ -20,6 +20,10 @@ setup(
     packages=['pycon'],
     scripts = ['setupJobs'],
     long_description=read('README.md'),
+    install_requires=[
+                  'yaml',
+                  'mako'
+    ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
