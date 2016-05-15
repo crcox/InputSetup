@@ -21,7 +21,7 @@ setup(
     scripts = ['setupJobs'],
     long_description=read('README.md'),
     install_requires=[
-                  'yaml',
+                  'pyyaml',
                   'mako'
     ],
     classifiers=[
