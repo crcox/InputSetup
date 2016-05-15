@@ -1,2 +1,3 @@
 *.pyc
 **/*.pyc
+condortools.egg-info

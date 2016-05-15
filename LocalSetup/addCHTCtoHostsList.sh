@@ -1,6 +1,11 @@
 #!/bin/bash
-ip=128.104.100.44
-url=submit-3.chtc.wisc.edu
+
+#ip=128.104.100.44
+#url=submit-3.chtc.wisc.edu
+#key=chtc
+
+ip=128.104.101.92
+url=submit-5.chtc.wisc.edu
 key=chtc
 
 if [ ! $EUID -eq 0 ]

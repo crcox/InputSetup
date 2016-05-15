@@ -1,7 +1,0 @@
-#!/bin/bash
-
-EXEC=$(find ./ -type f \( -name "*.sh" -o -name "*.py" \) -executable -printf "%f " | sed 's/ *$//')
-PYMOD=$(find ./ -type f -name "*py" ! -executable -printf "%f " | sed 's/ *$//')
-
-for f in ${EXEC}; do cp "${f}" ~/bin/; done
-for f in ${PYMOD}; do cp "${f}" ~/.local/lib/python2.6/site-packages; done
