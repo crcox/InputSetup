@@ -11,44 +11,47 @@ https://gist.github.com/crcox/899e27a56a0c7f1126bf
 
 Installation
 -------------
-`./install`
+`./setup.py`
 
-This is an extremely simple script that will copy the executable scripts
-in this repo into ~/bin, and any python modules into
-~/.local/lib/python2.6/site-packages. This will immediately make the
-python modules available to any script that depends on it that runs on
-the submit node itself. If for any reason a python module needs to be
-run on a remote job machine, it will need to be compiled and dispatched
-along with the job. To ensure access to the  executable scripts in
-~/bin, add:
+This handled the installation of `pycon`, a set of libraries that aid
+setting up batches of jobs for HTCondor. The python script `setupJobs`
+is also installed so that there is a ready interface to these libraries
+from the command line.
 
-`export PATH=${PATH}:~/bin`
+To install `pycon` issue the following at the command line from within
+the `condortools` directory. Any time a new version of the code is
+downloaded, you will need to re-issue this command if you want to update
+the installed version of the code. This should handle installing
+dependencies as well.
 
-to your .bashrc (or .zshrc, as the case may be).
+```bash
+python ./setup.py install --user
+```
 
 Dependencies
 ------------
-This set of tools has a number of Python and Perl dependencies. Depending on your environment, you may need to manage these dependencies at the user level (as opposed to the system level). For guides on how to administer Python and Perl in one such restricted environment (a HTCondor submit node maintained by the CHTC at University of Wisconsin-Madison), see the following two links:
+This set of tools has a number of Python dependencies. Depending on your
+environment, you may need to manage these dependencies at the user level
+(as opposed to the system level). For guides on how to administer Python
+in one such restricted environment (a HTCondor submit node maintained by
+the CHTC at University of Wisconsin-Madison), see the following two
+link. N.B. The `./setup.py` process may do everything properly, and if
+so you will not have to worry about this.
 
 - [Administering Python on the Submit Node](https://gist.github.com/crcox/2fda1ed0d2766cd992d1)
-- [Administering Perl on the Submit Node](https://gist.github.com/crcox/da0d36e05b66cbec3f73)
 
-Once you are setup to install modules locally and have ensured these local directories are on all relevant paths, the following modules need to be installed:
+Once you are setup to install modules locally and have ensured these
+local directories are on all relevant paths, the following modules need
+to be installed:
 
 ### Python Modules
 
 ```{bash}
 pip install pyyaml --user
 ```
-### Perl Modules
 
-```{bash}
-cpanm Text::Template
-cpanm YAML::XS
-cpanm String::Scanf
-cpanm Path::Tiny
-```
-
+SubmitNodeTools
+===============
 cox_submit_dag.sh and lsdag.sh
 ------------------------------
 These batch scripts, if you choose to use them (and it's only fair to say they are very beta at this point), should be installed on your path, and you'll probably want to strip the .sh. cox_submit_dag is a thin wrapper around condor_submit_dag that simply appends a line to a log file in your home directory called `.activedags`, and allows you to add a label to the DAG. So instead of:
@@ -75,6 +78,8 @@ Active DAGs:
 Finished DAGs
 ```
 
+LocalTools
+==========
 addCHTCtoHostsList.sh
 ---------------------
 This script is indended to be run on your own computer to make it easier
@@ -87,8 +92,8 @@ node with:
 
 `ssh <username>@chtc`
 
-expandStub_yaml.py
--------------
+PyCon and setupJobs
+===================
 This program allows you to take a yaml "stub file" such as:
 
 ```yaml
@@ -102,34 +107,115 @@ F: [7,8,9]
 ExpandFields:
     - [C,D]
     - E
+COPY: []
+URLS: []
 ```
 
-into:
+and use it as a guide to set up many independent jobs that can be
+launched using HTCondor. Given the `stub.yaml` file defined above:
 
-```yaml
-# master.json
---- A: 1, B: 2, C: 1, D: 3, E: 1, F: [7, 8, 9]
---- A: 1, B: 2, C: 2, D: 4, E: 1, F: [7, 8, 9]
---- A: 1, B: 2, C: 1, D: 3, E: 2, F: [7, 8, 9]
---- A: 1, B: 2, C: 2, D: 4, E: 2, F: [7, 8, 9]
---- A: 1, B: 2, C: 1, D: 3, E: 3, F: [7, 8, 9]
---- A: 1, B: 2, C: 2, D: 4, E: 3, F: [7, 8, 9]
+```bash
+setupJobs stub.yaml
 ```
 
-using:
+will yield:
 
-`./expandStub_yaml.py stub.yaml`
+`0/params.json`
+```json
+A: 1, B: 2, C: 1, D: 3, E: 1, F: [7, 8, 9]
+```
+`1/params.json`
+```json
+A: 1, B: 2, C: 2, D: 4, E: 1, F: [7, 8, 9]
+```
+`2/params.json`
+```json
+A: 1, B: 2, C: 1, D: 3, E: 2, F: [7, 8, 9]
+```
+`3/params.json`
+```json
+A: 1, B: 2, C: 2, D: 4, E: 2, F: [7, 8, 9]
+```
+`4/params.json`
+```json
+A: 1, B: 2, C: 1, D: 3, E: 3, F: [7, 8, 9]
+```
+`5/params.json`
+```json
+A: 1, B: 2, C: 2, D: 4, E: 3, F: [7, 8, 9]
+```
 
-In `stub.yaml`, I am specifying a scheme that involves several parameters. I am saying: "For all jobs, `A=1` and `B=2`, and `F=[7,8,9]`. Each job will get additionally some combination of `C`, `D`, and `E`, and that is defined by the (cryptic) `ExpandFields` special parameter.  In particular, `C` and `D` are linked such that some jobs will get `C=1` and `D=3`, while others will get `C=2` and `D=4`. `E` is not linked with anything, so it should be crossed with `[C,D]` (which are linked, and so can be considered as a set)".
+In `stub.yaml`, I am specifying a scheme that involves several
+parameters. I am saying: "For all jobs, `A=1` and `B=2`, and
+`F=[7,8,9]`. Each job will additionally get some combination of `C`,
+`D`, and `E`, and that is defined by the `ExpandFields` special
+parameter.  In particular, `C` and `D` are linked such that some jobs
+will get `C=1` and `D=3`, while others will get `C=2` and `D=4`.  `E` is
+not linked with anything, so it should be crossed with `[C,D]` (which
+are linked, and so can be considered as a set)".
 
-setupJobs_yaml.py
------------
-This script simply translates the `master.yaml` file produced by
-`expandStub.py` into a series of folders, each with their own config
-file. Currently, this script is rather project specific, but there are
-core features that may be extracted into a function in the `pycon`
-module. Each project will then have its own setup script.
+`setupJobs` can also setup DAG and Submit files for each job and the
+batch of jobs overall, given just a little more information.
 
+```bash
+setupJobs -d process.yaml stub.yaml
+```
+
+Where `process.yaml` is based on the following template:
+
+```
+# Specify in KB, MB, or GB.
+# No space between numbers and letters.
+request_memory: "2GB"
+request_disk: "10GB"
+
+# If your jobs are less than 4 hours long, "flock" them additionally to
+# other HTCondor pools on campus.
+# If your jobs are less than ~2 hours long, "glide" them to the national
+# Open Science Grid (OSG) for access to even more computers and the
+# fastest overall throughput.
+FLOCK: "true"
+GLIDE: "false"
+
+SHAREDIR: "../shared"
+
+# The WRAPPER is what will actually be run by condor. The path you enter
+# here will be inserted directly into the submit file, and so should be
+# defined relative to the position of a submit file. Typically, this
+# means: back out of a job-specific folder, enter the share folder, and
+# name the wrapper, as in ../shared/wrapper.sh
+WRAPPER: "../shared/run_WholeBrain_RSA.sh"
+
+# The EXECUTABLE is the name of the file that the WRAPPER will execute.
+# By the time the WRAPPER is executing, you will be on the execute node
+# and so the EXECUTABLE and the WRAPPER will be in the same location.
+# Therefore, you should just specify the basename of the EXECUTABLE here.
+EXECUTABLE: "WholeBrain_RSA_beta" # path relative to execute node.
+
+# If the EXECUTABLE is written to accept command line arguments, they
+# can be specified here. Positional arguments should be specified under
+# execPArgs, and named arguments should be assigned using key: value pairs
+# under execKVArgs.
+execPArgs:
+  #  - 1
+  #  - 2
+execKVArgs:
+  #foo: bar
+```
+
+If you are dispatching jobs using HTCondor, then many file paths need to
+be updated within the individual `params.json` files. This is because
+the HTCondor will deliver all files to a job into a single directory.
+The file paths in `params.json`, therefore, should be truncated to
+basenames. To have setupJobs do this for you, add the `-l` flag. Do
+_NOT_ do this if you are running jobs locally on your own machine.
+
+```bash
+setupJobs -d process.yaml stub.yaml
+```
+
+ExecuteNodeTools
+================
 packageForShipping.py
 ---------------------
 This script should be sent out with every job as a post-script. It has a
@@ -139,12 +225,3 @@ the submit node. Without this post script, any data written out into a
 directory structure of folders will be _left behind_.
 
 Coming soon: instructions on how to include this script with your jobs.
-
-PyCon
-=====
-A python module with utilities for everything from compiling python code
-for use on condor to fixing the "shebang" (#!) lines in executable
-scripts used on the submit node. These functions are intended for use
-inside project-specific code, and (should?) have usage information in
-the source code.
-executable python files
