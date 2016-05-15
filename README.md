@@ -42,55 +42,15 @@ so you will not have to worry about this.
 
 Once you are setup to install modules locally and have ensured these
 local directories are on all relevant paths, the following modules need
-to be installed:
+to be installed. Again, if ./setup.py worked propperly, you will not
+need to do this manually.
 
 ### Python Modules
 
 ```{bash}
 pip install pyyaml --user
+pip install mako --user
 ```
-
-SubmitNodeTools
-===============
-cox_submit_dag.sh and lsdag.sh
-------------------------------
-These batch scripts, if you choose to use them (and it's only fair to say they are very beta at this point), should be installed on your path, and you'll probably want to strip the .sh. cox_submit_dag is a thin wrapper around condor_submit_dag that simply appends a line to a log file in your home directory called `.activedags`, and allows you to add a label to the DAG. So instead of:
-
-```
-condor_submit_dag sweep.dag
-```
-
-You would run:
-```
-cox_submit_dag sweep.dag "16 character lab" # 16 might be too short after all...
-```
-
-This file is referenced by `lsdag` when parsing `condor_q` for information about your DAGs and active jobs. lsdag serves as an alternative to `condor_q` if you just want a high level summary of everything you have going on. `lsdag` currently takes no arguments.
-
-```
-> lsdag
-Active DAGs:
-      ID           Label    Idle  Active    Hold   NJobs    Done     Pct
- 5839062      GrOWL2 vis       2      29       0   16560   16506   99.67%
- 5848962        L1L2 sem      53    1763       4    3518     669   19.02%
- 5849090       GrOWL sem       6     153       3    3518    2408   68.45%
-
-Finished DAGs
-```
-
-LocalTools
-==========
-addCHTCtoHostsList.sh
----------------------
-This script is indended to be run on your own computer to make it easier
-to connect to the chtc submit node. On your local machine, run:
-
-`sudo ./addCHTCtoHostsList.sh`
-
-After executing this script, you will be able to connect to the submit
-node with:
-
-`ssh <username>@chtc`
 
 PyCon and setupJobs
 ===================
@@ -213,6 +173,49 @@ _NOT_ do this if you are running jobs locally on your own machine.
 ```bash
 setupJobs -d process.yaml stub.yaml
 ```
+
+
+SubmitNodeTools
+===============
+cox_submit_dag.sh and lsdag.sh
+------------------------------
+These batch scripts, if you choose to use them (and it's only fair to say they are very beta at this point), should be installed on your path, and you'll probably want to strip the .sh. cox_submit_dag is a thin wrapper around condor_submit_dag that simply appends a line to a log file in your home directory called `.activedags`, and allows you to add a label to the DAG. So instead of:
+
+```
+condor_submit_dag sweep.dag
+```
+
+You would run:
+```
+cox_submit_dag sweep.dag "16 character lab" # 16 might be too short after all...
+```
+
+This file is referenced by `lsdag` when parsing `condor_q` for information about your DAGs and active jobs. lsdag serves as an alternative to `condor_q` if you just want a high level summary of everything you have going on. `lsdag` currently takes no arguments.
+
+```
+> lsdag
+Active DAGs:
+      ID           Label    Idle  Active    Hold   NJobs    Done     Pct
+ 5839062      GrOWL2 vis       2      29       0   16560   16506   99.67%
+ 5848962        L1L2 sem      53    1763       4    3518     669   19.02%
+ 5849090       GrOWL sem       6     153       3    3518    2408   68.45%
+
+Finished DAGs
+```
+
+LocalTools
+==========
+addCHTCtoHostsList.sh
+---------------------
+This script is indended to be run on your own computer to make it easier
+to connect to the chtc submit node. On your local machine, run:
+
+`sudo ./addCHTCtoHostsList.sh`
+
+After executing this script, you will be able to connect to the submit
+node with:
+
+`ssh <username>@chtc`
 
 ExecuteNodeTools
 ================
