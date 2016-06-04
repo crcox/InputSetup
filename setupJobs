@@ -62,16 +62,16 @@ if SUBMITYAML:
 else:
     FLAG_SETUPDAG = False
 
-SPECIALFIELDS = ['ExpandFields','URLS','COPY']
+SPECIALFIELDS = ['EXPAND','URLS','COPY']
 StubAsMaster = False
 
 with open(STUBYAML,'rb') as f:
     stub = yaml.load(f)
 
 try:
-    EXPAND = pycon.utils.flatten(stub['ExpandFields'])
+    EXPAND = pycon.utils.flatten(stub['EXPAND'])
 except KeyError:
-    print "Stub does not include an ExpandFields list. Treating stub as master..."
+    print "Stub does not include an EXPAND list. Treating stub as master..."
     StubAsMaster = True
 
 sharedir = os.path.join(ROOTDIR,'shared')
