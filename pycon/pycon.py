@@ -1,8 +1,8 @@
 from . import utils
 import operator
 def expand_stub(stub):
-    EXPAND = stub['ExpandFields']
-    del stub['ExpandFields']
+    EXPAND = stub['EXPAND']
+    del stub['EXPAND']
 
     nPerField = []
     for field in EXPAND:
