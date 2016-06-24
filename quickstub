@@ -12,7 +12,7 @@ stub_template = Template(stub_template_string)
 
 p = argparse.ArgumentParser()
 # Required Positional Arguments
-p.add_argument('method')
+p.add_argument('method', help="soslasso, iterlasso, lasso, searchlight. ToDo: searchlightrsa, nrsa")
 # Flags
 p.add_argument('-v','--verbose',action='store_true',help="Print parameter details into the stub file as comments.")
 # Options
