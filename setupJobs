@@ -33,11 +33,6 @@ p.add_argument('-r','--root_dir',type=str,nargs=1,default='.',help='Directory in
 
 args = p.parse_args()
 
-## This is sort of a hack. If pycon is installed somewhere else, the code
-## below will need to be changed.
-PERLBIN = os.path.join(os.path.expanduser('~'),'src','pycon')
-PERLTEMPLATES = os.path.join(os.path.expanduser('~'),'src','pycon','templates')
-
 STUBYAML = args.stub
 SUBMITYAML = args.dag_setup
 OFFSET = args.offset_index

@@ -64,7 +64,7 @@ C: [1,2]
 D: [3,4]
 E: [1,2,3]
 F: [7,8,9]
-ExpandFields:
+EXPAND:
     - [C,D]
     - E
 COPY: []
@@ -108,7 +108,7 @@ A: 1, B: 2, C: 2, D: 4, E: 3, F: [7, 8, 9]
 In `stub.yaml`, I am specifying a scheme that involves several
 parameters. I am saying: "For all jobs, `A=1` and `B=2`, and
 `F=[7,8,9]`. Each job will additionally get some combination of `C`,
-`D`, and `E`, and that is defined by the `ExpandFields` special
+`D`, and `E`, and that is defined by the `EXPAND` special
 parameter.  In particular, `C` and `D` are linked such that some jobs
 will get `C=1` and `D=3`, while others will get `C=2` and `D=4`.  `E` is
 not linked with anything, so it should be crossed with `[C,D]` (which
