@@ -180,8 +180,16 @@ metadata_var: metadata
 # do with the parameter selection.
 % endif
 cvscheme: 1
-cvholdout: [1,2,3,4,5,6,7,8,9,10]
+% if method in ['soslasso','nrsa','searchlightrsa'] and r == 0:
+cvholdout:
+% for j in range(1,k+1):
+  - [${','.join(str(i) for i in range(1,k+1) if not i == j)}]
+% endfor
+finalholdout: [${','.join(str(i) for i in range(1,k+1))}]
+% else:
+cvholdout: [${','.join(str(i) for i in range(1,k+1))}]
 finalholdout: 0
+% endif
 
 # Targets
 # -------
@@ -221,8 +229,13 @@ filters:
   - [colfilterA, colfilterB] # A and B are combined with OR logic
   - colfilterC # The column filter is ultimately C AND (A OR B)
 
+% if method in ['lasso','iterlasso','soslasso','searchlight']:
 # WholeBrain_MVPA Options
 # =======================
+% elif method in ['searchlightrsa','nrsa']:
+# WholeBrain_RSA Options
+# =======================
+% endif
 % if verbose:
 # SmallFootprint means "do not save model weights or predicted values". This
 # might be useful when you are tuning over many, many parameters and you worry
@@ -236,10 +249,24 @@ filters:
 # id from the filename using sscanf which is a MATLAB builtin. So experiment
 # with sscanf to come up with the right format string for your needs, and then
 # put that format string here.
+#
+# If you are not running on HTCondor, you can drop the executable and wrapper
+# lines.
 % endif
 SmallFootprint: 0
 SaveResultsAs: mat
 subject_id_fmt: s%d.mat
+% if method in ['lasso','iterlasso','soslasso','searchlight']:
+executable: "${HOME}/src/WholeBrain_MVPA/bin/WholeBrain_MVPA"
+wrapper: "${HOME}/src/WholeBrain_MVPA/run_WholeBrain_MVPA.sh"
+% elif method in ['searchlightrsa','nrsa']:
+executable: "${HOME}/src/WholeBrain_RSA/bin/WholeBrain_RSA"
+wrapper: "${HOME}/src/WholeBrain_RSA/run_WholeBrain_RSA.sh"
+% endif
+% if r > 0:
+RandomSeed: [${','.join(str(i) for i in range(1,r+1))}]
+PermutationTest: True
+% endif
 
 # condortools/setupJob Options
 # ============================
@@ -274,5 +301,13 @@ subject_id_fmt: s%d.mat
 % endif
 EXPAND:
   - data
-COPY: []
-URLS: []
+% if verbose:
+# If you are not running on HTCondor, you can (probably) replace the following with:
+# COPY: []
+# URS: []
+% endif
+COPY:
+  - executable
+  - wrapper
+URLS:
+  - data
