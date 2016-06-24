@@ -18,7 +18,7 @@ setup(
     keywords = "HTCondor UW-Madison",
     url = "http://packages.python.org/nextmds",
     packages=['pycon'],
-    scripts = ['setupJobs'],
+    scripts = ['setupJobs','quickstub'],
     long_description=read('README.md'),
     install_requires=[
                   'pyyaml',
