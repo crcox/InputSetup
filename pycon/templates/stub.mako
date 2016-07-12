@@ -124,6 +124,35 @@ slclassifier: "lda_shrinkage"
 slradius: [6,9,12,15]
 slTestToUse: "accuracyOneSided_analytical"
 slpermutations: 0
+
+% elif method=="nrsa":
+# Network RSA
+# ===========
+regularization: growl2
+
+# Parameters
+# ----------
+% if verbose:
+# bias toggles whether or not to use a bias unit when fitting models
+# alpha scales the SOS Lasso penalty associated with picking items from
+# different groups.
+#
+# lambda scales ... (need to remember)
+#
+# lambda1 scales the overall sparsity penalty.
+# LambdaSeq ... (need to remember)
+#
+# normalize allows you to specify a normalization method to apply to your data
+# before fitting models. zscore is recommended (subtract mean and divide by
+# standard deviation), but stdev will simply divide by the standard deviation
+# without recentering, and 2norm will subtract the mean and divide by the
+# 2-norm (which is the euclidean distance between each voxel and the origin).
+% endif
+bias: 0
+lambda: []
+lambda1: []
+LambdaSeq: "inf"
+normalize: zscore
 % endif
 
 # Data and Metadata Paths
@@ -198,8 +227,16 @@ finalholdout: 0
 # respectively, to select the right target. See WholeBrain_MVPA/demo/demo.m for
 # how to define targets in the metadata structure.
 % endif
+% if method in ['soslasso', 'iterlasso', 'lasso', 'searchlight']:
 target: faces
 target_type: category
+% elif method in ['searchlightrsa','nrsa']:
+target: "semantic"
+target_type: "similarity"
+sim_source: "featurenorms"
+sim_metric: "cosine"
+tau: 0.3
+% endif
 
 # Coordinates
 # -----------
@@ -304,7 +341,7 @@ EXPAND:
 % if verbose:
 # If you are not running on HTCondor, you can (probably) replace the following with:
 # COPY: []
-# URS: []
+# URLS: []
 % endif
 COPY:
   - executable
