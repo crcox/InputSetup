@@ -348,3 +348,4 @@ COPY:
   - wrapper
 URLS:
   - data
+  - metadata
