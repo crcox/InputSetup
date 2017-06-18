@@ -117,11 +117,17 @@ with open(URLS,'w') as f:
             SourceList = stub[field]
             for iSource,source in enumerate(SourceList):
                 f.write(source+'\n')
-                stub[field][iSource] = os.path.basename(source)
+                if FLAG_LOCALDATA:
+                    stub[field][iSource] = os.path.basename(source)
+                else:
+                    stub[field][iSource] = os.path.normpath(os.path.join('..',sharedir,os.path.basename(source)))
         else:
             source = stub[field]
             f.write(source+'\n')
-            stub[field] = os.path.basename(source)
+            if FLAG_LOCALDATA:
+                stub[field] = os.path.basename(source)
+            else:
+                stub[field] = os.path.normpath(os.path.join('..',sharedir,os.path.basename(source)))
 
 if StubAsMaster:
     master = stub
@@ -144,7 +150,7 @@ JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in x
 COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
 URLS_uniq = [field for field in stub['URLS'] if field in EXPAND]
 try:
-    bar = progress.bar.ShadyBar('', max=njobs)
+    bar = progress.bar.Bar('', max=njobs)
 except NameError:
     pass
 for iJob,config in zip(JobDirs,master):
@@ -159,12 +165,18 @@ for iJob,config in zip(JobDirs,master):
             for iSource,source in enumerate(SourceList):
                 target = os.path.join(iJob,os.path.basename(source))
                 shutil.copyfile(source, target)
+                if FLAG_LOCALDATA:
+                    config[field][iSource] = os.path.basename(target)
+                else:
+                    config[field][iSource] = os.path.normpath(target)
         else:
             source = config[field]
             target = os.path.join(iJob,os.path.basename(source))
-            config[field][iSource] = os.path.basename(target)
             shutil.copyfile(source, target)
-            config[field] = os.path.basename(target)
+            if FLAG_LOCALDATA:
+                config[field] = os.path.basename(target)
+            else:
+                config[field] = os.path.normpath(target)
 
     #############################################################
     #                    Write URLS files                       #
@@ -177,12 +189,18 @@ for iJob,config in zip(JobDirs,master):
                 for source in SourceList:
                     source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
                     f.write(source_stripped +'\n')
-                    config[field][iSource] = os.path.basename(source)
+                    if FLAG_LOCALDATA:
+                        config[field][iSource] = os.path.basename(source)
+                    else:
+                        config[field][iSource] = os.path.normpath(source)
             else:
                 source = config[field]
                 source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
                 f.write(source_stripped +'\n')
-                config[field] = os.path.basename(source)
+                if FLAG_LOCALDATA:
+                    config[field] = os.path.basename(source)
+                else:
+                    config[field] = os.path.normpath(source)
 
     #############################################################
     #          Setup DAG and SUBMIT files for condor            #

@@ -16,8 +16,9 @@ setup(
     description = ("Collection of simple tools useful for working with HTCondor."),
     license = "MIT",
     keywords = "HTCondor UW-Madison",
-    url = "http://packages.python.org/nextmds",
+    url = "http://packages.python.org/condortools",
     packages=['pycon'],
+    package_data={'pycon':['templates/*']},
     scripts = ['setupJobs','quickstub'],
     long_description=read('README.md'),
     install_requires=[

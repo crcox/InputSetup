@@ -37,7 +37,8 @@ def flatten(list_of_lists):
     flat = []
     for sublist in list_of_lists:
         if isinstance(sublist,list):
-            flat.extend(sublist)
+            x = flatten(sublist)
+            flat.extend(x)
         else:
             flat.append(sublist)
     return flat
