@@ -82,7 +82,11 @@ if not os.path.isdir(sharedir):
 # for the file in the job's current directory. This is for jobs
 # that run on HTCondor, since all files are transfered into the
 # job directory (directories themselves are not transfered).
-COPY_shared = [field for field in stub['COPY'] if field not in EXPAND]
+if 'COPY' in stub:
+    COPY_shared = [field for field in stub['COPY'] if field not in EXPAND]
+else:
+    COPY_shared = []
+
 for field in COPY_shared:
     if isinstance(stub[field],list):
         SourceList = stub[field]
@@ -109,7 +113,11 @@ for field in COPY_shared:
 # executable will look for the file in the job's current
 # directory. HTCondor transfers all files into the job directory
 # and does not transfer directories, themselves.
-URLS_shared = [field for field in stub['URLS'] if field not in EXPAND]
+if 'URLS' in stub:
+    URLS_shared = [field for field in stub['URLS'] if field not in EXPAND]
+else:
+    URLS_shared = []
+
 URLS = os.path.join(sharedir,'URLS_SHARED')
 with open(URLS,'w') as f:
     for field in URLS_shared:
@@ -147,8 +155,16 @@ njobs = len(master)
 print "Composing {njobs:d} individual jobs...".format(njobs=njobs)
 width = pycon.utils.ndigits(njobs-1)
 JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in xrange(njobs)]
-COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
-URLS_uniq = [field for field in stub['URLS'] if field in EXPAND]
+if 'COPY' in stub:
+    COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
+else:
+    COPY_uniq = []
+
+if 'URLS' in stub:
+    URLS_uniq = [field for field in stub['URLS'] if field in EXPAND]
+else:
+    URLS_uniq = []
+
 try:
     bar = progress.bar.Bar('', max=njobs)
 except NameError:
@@ -220,8 +236,12 @@ for iJob,config in zip(JobDirs,master):
     #           Distribute params.json file to each job         #
     #############################################################
     paramfile = os.path.join(iJob,'params.json')
-    del config['COPY']
-    del config['URLS']
+    if 'COPY' in config:
+        del config['COPY']
+
+    if 'URLS' in config:
+        del config['URLS']
+
     with open(paramfile, 'w') as f:
         json.dump(config, f, sort_keys = True, indent = 4)
     try:
