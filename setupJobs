@@ -1,19 +1,19 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import argparse
 import json
 import os
 import pkg_resources
-import pycon
-import pycon.utils
 import shutil
 import subprocess
 import yaml
 from mako.template import Template
+from pycon import pycon
+from hyperband import hyperband, get_random_hyperparameter_configuration
 try:
     import progress.bar
 except ImportError:
     pass
-
 resource_package = 'pycon';
 #resource_path_dag = os.path.join('templates','subdag.mako')
 #dag_template_string = pkg_resources.resource_string(resource_package, resource_path_dag)
@@ -66,12 +66,32 @@ with open(STUBYAML,'rb') as f:
 try:
     EXPAND = pycon.utils.flatten(stub['EXPAND'])
 except KeyError:
-    print "Stub does not include an EXPAND list. Treating stub as master..."
+    print("Stub does not include an EXPAND list. Treating stub as master...")
     StubAsMaster = True
 
 sharedir = os.path.join(ROOTDIR,'shared')
 if not os.path.isdir(sharedir):
     os.makedirs(sharedir)
+
+#############################################################
+#                HYPERBAND initialization                   #
+#############################################################
+if 'HYPERBAND' in stub:
+    budget = stub['HYPERBAND']['budget']
+    eta = stub['HYPERBAND']['aggressiveness']
+    hyperparams = stub['HYPERBAND']['hyperparameters']
+    BRACKETS = hyperband(budget, eta)
+    for p in hyperparams:
+        distribution = stub[p]['distribution']
+        dist_args = stub[p]['args']
+        stub[p] = [[
+            get_random_hyperparameter_configuration(distribution, dist_args)
+            for i in range(s['n']) ]
+            for s in BRACKETS ]
+
+    stub['BRACKETS'] = BRACKETS
+    EXPAND.append(['BRACKETS'] + hyperparams)
+    stub['EXPAND'] = EXPAND
 
 #############################################################
 #         Copy files to be shared into ./shared             #
@@ -143,7 +163,7 @@ else:
     master = pycon.expand_stub(stub)
 
 if FLAG_WRITEMASTER:
-    print "Writing master.yaml..."
+    print("Writing master.yaml...")
     with open('master.yaml', 'w') as f:
         yaml.dump_all(master, f)
 
@@ -152,9 +172,9 @@ if FLAG_WRITEMASTER:
 #              Setup individual jobs structure              #
 #############################################################
 njobs = len(master)
-print "Composing {njobs:d} individual jobs...".format(njobs=njobs)
+print("Composing {njobs:d} individual jobs...".format(njobs=njobs))
 width = pycon.utils.ndigits(njobs-1)
-JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in xrange(njobs)]
+JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in range(njobs)]
 if 'COPY' in stub:
     COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
 else:
@@ -265,4 +285,4 @@ except NameError:
 with open('.njobs','w') as f:
     f.write(str(njobs)+'\n')
 
-print "Done."
+print("Done.")

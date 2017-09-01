@@ -1,5 +1,10 @@
+from __future__ import print_function
 from . import utils
 import operator
+import sys
+if sys.version_info >= (3, 0):
+    from functools import reduce
+
 def expand_stub(stub):
     EXPAND = stub['EXPAND']
     del stub['EXPAND']
@@ -36,15 +41,15 @@ def expand_stub(stub):
 
             n = flength[0]
             if not all(fl==n for fl in flength):
-                print "condortools:ExpandStub:error: Linked fields are of different lengths."
+                print("condortools:ExpandStub:error: Linked fields are of different lengths.")
                 raise IndexError
 
             nPerField.append(n)
 
     N = reduce(operator.mul, nPerField, 1)
 
-    master = [dict(stub) for i in xrange(N)]
-    for i in xrange(N):
+    master = [dict(stub) for i in range(N)]
+    for i in range(N):
         inds = utils.ind2sub(nPerField, i)
         for ii,field in enumerate(EXPAND):
             try:
