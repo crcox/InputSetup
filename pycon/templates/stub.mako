@@ -128,7 +128,7 @@ slpermutations: 0
 % elif method=="nrsa":
 # Network RSA
 # ===========
-regularization: growl2
+regularization: L1L2
 
 # Parameters
 # ----------
@@ -148,11 +148,21 @@ regularization: growl2
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: 0
-lambda: []
-lambda1: []
-LambdaSeq: "inf"
+bias: 1
 normalize: zscore
+% if hyperband:
+lambda: {'distribution': 'uniform', 'args': [1, 16]}
+# Uncomment if using GrOWL
+# LambdaSeq: "inf" 
+# lambda1: {'distribution': 'uniform', 'args': [1, 16]}
+HYPERBAND:
+  budget: 100
+  aggressiveness: 3
+  hyperparameters: ['lambda']
+% else:
+lambda: []
+# lambda1: []
+% endif
 % endif
 
 # Data and Metadata Paths
@@ -226,6 +236,8 @@ finalholdout: 0
 # These fields check against metadata.targets.label and metadata.targets.type,
 # respectively, to select the right target. See WholeBrain_MVPA/demo/demo.m for
 # how to define targets in the metadata structure.
+# Smaller values of tau are associated with higher-dimensional embeddings to
+# model. It is a threshold for the reconstruction error.
 % endif
 % if method in ['soslasso', 'iterlasso', 'lasso', 'searchlight']:
 target: faces
@@ -303,6 +315,8 @@ wrapper: "${HOME}/src/WholeBrain_RSA/run_WholeBrain_RSA.sh"
 % if r > 0:
 RandomSeed: [${','.join(str(i) for i in range(1,r+1))}]
 PermutationTest: True
+PermutationMethod: 'simple'
+RestrictPermutationsByCV: false
 % endif
 
 # condortools/setupJob Options
@@ -338,10 +352,15 @@ PermutationTest: True
 % endif
 EXPAND:
   - data
+  - [finalholdout, cvholdout]
+% if r > 0:
+  - RandomSeed
+% endif
 % if verbose:
-# If you are not running on HTCondor, you can (probably) replace the following with:
+# If you are not running on HTCondor, you can replace the following with:
 # COPY: []
 # URLS: []
+# or remove them all together.
 % endif
 COPY:
   - executable

@@ -64,7 +64,7 @@ with open(STUBYAML,'rb') as f:
     stub = yaml.load(f)
 
 try:
-    EXPAND = pycon.utils.flatten(stub['EXPAND'])
+    EXPAND = pycon.utils.flatten(stub['EXPAND'].copy())
 except KeyError:
     print("Stub does not include an EXPAND list. Treating stub as master...")
     StubAsMaster = True
@@ -90,8 +90,7 @@ if 'HYPERBAND' in stub:
             for s in BRACKETS ]
 
     stub['BRACKETS'] = BRACKETS
-    EXPAND.append(['BRACKETS'] + hyperparams)
-    stub['EXPAND'] = EXPAND
+    stub['EXPAND'].append(['BRACKETS'] + hyperparams)
 
 #############################################################
 #         Copy files to be shared into ./shared             #
