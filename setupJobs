@@ -86,7 +86,7 @@ if 'HYPERBAND' in stub:
         dist_args = stub[p]['args']
         stub[p] = [[
             get_random_hyperparameter_configuration(distribution, dist_args)
-            for i in range(s['n']) ]
+            for i in range(s['n'][0]) ]
             for s in BRACKETS ]
 
     stub['BRACKETS'] = BRACKETS

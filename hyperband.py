@@ -15,7 +15,11 @@ def hyperband(max_iter, eta):
     for s in reversed(range(s_max+1)):
         n = int(ceil(B/max_iter/(s+1)*eta**s))
         r = int(max_iter*eta**(-s))
-        BRACKET.append({'s':s,'n':n,'r':r})
+        BRACKET.append({
+            's':s,
+            'n':[int(n*eta**(-i)) for i in range(s+1)],
+            'r':[int(r*eta**(i)) for i in range(s+1)]
+        })
 
     return BRACKET
 
