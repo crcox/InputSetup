@@ -64,7 +64,7 @@ with open(STUBYAML,'rb') as f:
     stub = yaml.load(f)
 
 try:
-    EXPAND = pycon.utils.flatten(stub['EXPAND'].copy())
+    EXPAND = pycon.utils.flatten(stub['EXPAND'])
 except KeyError:
     print("Stub does not include an EXPAND list. Treating stub as master...")
     StubAsMaster = True
