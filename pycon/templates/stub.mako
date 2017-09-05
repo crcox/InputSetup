@@ -1,3 +1,31 @@
+<%
+    X = {
+        'bias': 1,
+        'lambda': [],
+        'lambda1': [],
+        'alpha': [],
+        'diameter': 18,
+        'overlap': 9,
+        'normalize': 'zscore',
+        'subject': [],
+        'finalholdout': [],
+        'orientation': 'orig'
+    }
+
+    try:
+        X['finalholdout'] = range(1,k+1)
+    except:
+        pass
+
+    for x in override:
+        X[x] = override[x]
+
+    if X['subject']:
+        X['data'] = X['subject']
+    else:
+        X['data'] = data
+
+%>
 % if method=="soslasso":
 # SOS LASSO
 # =========
@@ -28,13 +56,13 @@ regularization: soslasso
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: 0
-alpha: []
-lambda: []
-shape: sphere
-diameter: 18
-overlap: 9
-normalize: zscore
+bias: ${X['bias']}
+alpha: [${','.join(str(i) for i in X['alpha'])}]
+lambda: [${','.join(str(i) for i in X['lambda'])}]
+shape: ${X['shape']}
+diameter: [${','.join(str(i) for i in X['diameter'])}]
+overlap: [${','.join(str(i) for i in X['overlap'])}]
+normalize: ${X['normalize']}
 % elif method=="lasso":
 # LASSO
 # =====
@@ -59,9 +87,9 @@ regularization: lasso_glmnet
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: 0
-lambda: []
-normalize: zscore
+bias: ${X['bias']}
+lambda: [${','.join(str(i) for i in X['lambda'])}]
+normalize: ${X['normalize']}
 % elif method=="iterlasso":
 # ITERATIVE LASSO
 # ===============
@@ -86,9 +114,9 @@ regularization: iterlasso_glmnet
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: 0
-lambda: []
-normalize: zscore
+bias: ${X['bias']}
+lambda: [${','.join(str(i) for i in X['lambda'])}]
+normalize: ${X['normalize']}
 % elif method=="searchlight":
 # SEARCHLIGHT
 # ===========
@@ -148,8 +176,8 @@ regularization: L1L2
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: 1
-normalize: zscore
+bias: ${X['bias']}
+normalize: ${X['normalize']}
 % if hyperband:
 lambda: {'distribution': 'uniform', 'args': [1, 16]}
 # Uncomment if using GrOWL
@@ -160,7 +188,7 @@ HYPERBAND:
   aggressiveness: 3
   hyperparameters: ['lambda']
 % else:
-lambda: []
+lambda: [${','.join(str(i) for i in X['lambda'])}]
 # lambda1: []
 % endif
 % endif
@@ -187,7 +215,7 @@ lambda: []
 # metadata_var is the same as data_var.
 % endif
 data:
-% for d in data:
+% for d in X['data']:
   - ${d}
 % endfor
 data_var: X
@@ -220,11 +248,16 @@ metadata_var: metadata
 % endif
 cvscheme: 1
 % if method in ['soslasso','nrsa','searchlightrsa'] and r == 0:
+% if final:
+cvholdout: [${','.join(str(i) for i in override['finalholdout'])}]
+finalholdout: 0
+% else:
 cvholdout:
 % for j in range(1,k+1):
   - [${','.join(str(i) for i in range(1,k+1) if not i == j)}]
 % endfor
 finalholdout: [${','.join(str(i) for i in range(1,k+1))}]
+% endif
 % else:
 cvholdout: [${','.join(str(i) for i in range(1,k+1))}]
 finalholdout: 0
@@ -252,6 +285,7 @@ tau: 0.3
 
 # Coordinates
 # -----------
+${print(1)}
 % if verbose:
 # orientation is a way of indicating which set of coordinates should be
 # referenced during the analysis. For SOS Lasso the choice of coordinates has
@@ -261,8 +295,7 @@ tau: 0.3
 # and across subjects. The value provided here is checked against
 # metadata.coords.orientation to select the desired coordinates.
 % endif
-orientation: tlrc
-
+orientation: ${X['orientation']}
 # Filters
 # -------
 % if verbose:
@@ -351,8 +384,12 @@ RestrictPermutationsByCV: false
 # takes effect, so lists of files can be distributed to specific jobs.
 % endif
 EXPAND:
+% if final:
+  - [data, finalholdout, lambda]
+% else:
   - data
   - [finalholdout, cvholdout]
+% endif
 % if r > 0:
   - RandomSeed
 % endif
