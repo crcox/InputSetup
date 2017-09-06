@@ -5,6 +5,7 @@ import sys
 import pandas
 import pkg_resources
 import yaml
+from hyperband import pick_best_hyperparameters
 from mako.template import Template
 resource_package = 'pycon'
 
@@ -39,19 +40,12 @@ if args.tuning_error:
     if '/path/to/data/s101.mat' in args.data:
         args.data = []
     df = pandas.concat([pandas.read_csv(f) for f in args.tuning_error])
-    n = len(args.by + args.hyperparameters)
-    x = df.groupby(args.by + args.hyperparameters).agg({args.objective: 'mean'})
-    y = x.groupby(args.by).idxmin()
+    z = pick_best_hyperparameters(df, args.by, args.hyperparameters, args.objective)
+    # n = len(args.by + args.hyperparameters)
     # z = y.assign(hyper_min=[x[len(args.by):n] for x in z[args.objective]).drop(args.objective, 1)
-    for i,h in enumerate(args.hyperparameters):
-        kwargs = {h: [x[len(args.by)+i] for x in y[args.objective]]}
-        y = y.assign(**kwargs)
-
-    z = y.drop(args.objective, 1)
-
     for i,x in enumerate(args.by):
         levels = z.index.levels[i]
-        if x is 'subject' and args.data:
+        if x == 'subject' and args.data:
             X[x] = [args.data[j] for j in z.index.labels[i]]
         else:
             X[x] = [levels[j] for j in z.index.labels[i]]

@@ -23,6 +23,16 @@ def hyperband(max_iter, eta):
 
     return BRACKET
 
+def pick_best_hyperparameters(df, by, hyperparameters, objective):
+    x = df.groupby(by + hyperparameters).agg({objective: 'mean'})
+    y = x.groupby(by).idxmin()
+    for i,h in enumerate(hyperparameters):
+        kwargs = {h: [x[len(by)+i] for x in y[objective]]}
+        y = y.assign(**kwargs)
+
+    z = y.drop(objective, 1)
+    return z
+
 if __name__ == "__main__":
     max_iter = 100
     eta = 3

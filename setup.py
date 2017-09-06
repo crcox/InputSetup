@@ -19,6 +19,7 @@ setup(
     url = "http://packages.python.org/condortools",
     packages=['pycon'],
     package_data={'pycon':['templates/*']},
+    py_modules=['hyperband'],
     scripts = ['setupJobs','quickstub'],
     long_description=read('README.md'),
     install_requires=[

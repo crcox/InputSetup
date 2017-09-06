@@ -285,7 +285,6 @@ tau: 0.3
 
 # Coordinates
 # -----------
-${print(1)}
 % if verbose:
 # orientation is a way of indicating which set of coordinates should be
 # referenced during the analysis. For SOS Lasso the choice of coordinates has
