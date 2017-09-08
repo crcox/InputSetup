@@ -1,21 +1,46 @@
 <%
+    import os,re
+    HOME = os.path.expanduser('~')
+    if method in ['lasso','iterlasso','soslasso','searchlight']:
+        suffix='MVPA'
+    elif method in ['searchlightrsa','nrsa']:
+        suffix='RSA'
+
     X = {
+        'data': ['/path/to/data/s101.mat','/path/to/data/s102.mat'],
+        'data_var': 'X',
+        'metadata': '/path/to/data/metadata.mat',
+        'metadata_var': 'metadata',
+        'filters': ['rowfilter',['colfilterA','colfilterB'],'colfilterC'],
+        'cvscheme': 1,
         'bias': 1,
         'lambda': [],
         'lambda1': [],
         'alpha': [],
+        'tau': 0.3,
         'diameter': 18,
         'overlap': 9,
         'normalize': 'zscore',
         'subject': [],
         'finalholdout': [],
-        'orientation': 'orig'
+        'orientation': 'orig',
+        'executable': "{:s}/src/WholeBrain_{:s}/bin/WholeBrain_{:s}".format(HOME,suffix,suffix),
+        'wrapper': "{:s}/src/WholeBrain_{:s}/run_WholeBrain_{:s}.sh".format(HOME,suffix,suffix)
     }
 
     try:
         X['finalholdout'] = range(1,k+1)
     except:
         pass
+
+    if method in ['soslasso', 'iterlasso', 'lasso', 'searchlight']:
+        X['target'] = 'faces'
+        X['target_type'] = 'category'
+    elif method in ['searchlightrsa','nrsa']:
+        X['target'] = "semantic"
+        X['target_type'] = "similarity"
+        X['sim_source'] = "featurenorms"
+        X['sim_metric'] = "cosine"
 
     for x in override:
         X[x] = override[x]
@@ -25,6 +50,14 @@
     else:
         X['data'] = data
 
+    # if not 'subject_id_fmt' in X:
+    # Temporarily giving this supreme precedence
+    X['subject_id_fmt'] = re.sub('[0-9]+','%d',os.path.basename(X['data'][0]))
+
+    try:
+        del X['subject']
+    except KeyError:
+        pass
 %>
 % if method=="soslasso":
 # SOS LASSO
@@ -189,6 +222,8 @@ HYPERBAND:
   hyperparameters: ['lambda']
 % else:
 lambda: [${','.join(str(i) for i in X['lambda'])}]
+# Uncomment if using GrOWL
+# LambdaSeq: "inf" 
 # lambda1: []
 % endif
 % endif
@@ -218,9 +253,9 @@ data:
 % for d in X['data']:
   - ${d}
 % endfor
-data_var: X
-metadata: ${metadata}
-metadata_var: metadata
+data_var: ${X['data_var']}
+metadata: ${X['metadata']}
+metadata_var: ${X['metadata_var']}
 
 # Metadata Field References
 # =========================
@@ -246,10 +281,10 @@ metadata_var: metadata
 # with the optimal parameters, there are parts of the data that had nothing to
 # do with the parameter selection.
 % endif
-cvscheme: 1
-% if method in ['soslasso','nrsa','searchlightrsa'] and r == 0:
+cvscheme: ${X['cvscheme']}
+% if method in ['soslasso','nrsa','searchlightrsa']:
 % if final:
-cvholdout: [${','.join(str(i) for i in override['finalholdout'])}]
+cvholdout: [${','.join(str(i) for i in X['finalholdout'])}]
 finalholdout: 0
 % else:
 cvholdout:
@@ -272,15 +307,12 @@ finalholdout: 0
 # Smaller values of tau are associated with higher-dimensional embeddings to
 # model. It is a threshold for the reconstruction error.
 % endif
-% if method in ['soslasso', 'iterlasso', 'lasso', 'searchlight']:
-target: faces
-target_type: category
-% elif method in ['searchlightrsa','nrsa']:
-target: "semantic"
-target_type: "similarity"
-sim_source: "featurenorms"
-sim_metric: "cosine"
-tau: 0.3
+target: ${X['target']}
+target_type: ${X['target_type']}
+% if method in ['searchlightrsa','nrsa']:
+sim_source: ${X['sim_source']}
+sim_metric: ${X['sim_metric']}
+tau: ${X['tau']}
 % endif
 
 # Coordinates
@@ -306,9 +338,15 @@ orientation: ${X['orientation']}
 # same dimension.
 % endif
 filters:
+% if X['filters']:
+% for f in X['filters']:
+    - ${"[{:s}]".format(','.join(str(ff) for ff in f)) if isinstance(f,list) else f}
+% endfor
+% else:
   - rowfilter
   - [colfilterA, colfilterB] # A and B are combined with OR logic
   - colfilterC # The column filter is ultimately C AND (A OR B)
+% endif
 
 % if method in ['lasso','iterlasso','soslasso','searchlight']:
 # WholeBrain_MVPA Options
@@ -336,19 +374,25 @@ filters:
 % endif
 SmallFootprint: 0
 SaveResultsAs: mat
-subject_id_fmt: s%d.mat
-% if method in ['lasso','iterlasso','soslasso','searchlight']:
-executable: "${HOME}/src/WholeBrain_MVPA/bin/WholeBrain_MVPA"
-wrapper: "${HOME}/src/WholeBrain_MVPA/run_WholeBrain_MVPA.sh"
-% elif method in ['searchlightrsa','nrsa']:
-executable: "${HOME}/src/WholeBrain_RSA/bin/WholeBrain_RSA"
-wrapper: "${HOME}/src/WholeBrain_RSA/run_WholeBrain_RSA.sh"
+subject_id_fmt: ${X['subject_id_fmt']}
+executable: ${X['executable']}
+wrapper: ${X['wrapper']}
+% if r[0] > 0:
+% if len(r) > 1 and r[1] > 1:
+<% a = r[0] // r[1] %>
+RandomSeed:
+% for j in range(r[1]):
+    - [${','.join(str(i) for i in range(a*j,a*(j+1)))}]
+% endfor
+% if r[0] > a*r[1]:
+    - [${','.join(str(i) for i in range(a*r[1],r[0]+1))}]
 % endif
-% if r > 0:
-RandomSeed: [${','.join(str(i) for i in range(1,r+1))}]
+% else:
+RandomSeed: [${','.join(str(i) for i in range(1,r[0]+1))}]
+% endif
 PermutationTest: True
 PermutationMethod: 'simple'
-RestrictPermutationsByCV: false
+RestrictPermutationByCV: false
 % endif
 
 # condortools/setupJob Options
@@ -384,12 +428,12 @@ RestrictPermutationsByCV: false
 % endif
 EXPAND:
 % if final:
-  - [data, finalholdout, lambda]
+  - [data, cvholdout, lambda]
 % else:
   - data
   - [finalholdout, cvholdout]
 % endif
-% if r > 0:
+% if r[0] > 0:
   - RandomSeed
 % endif
 % if verbose:

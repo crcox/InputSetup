@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import absolute_import, division, print_function
+from builtins import open
 import argparse
 import os
 import sys
@@ -20,11 +22,12 @@ p.add_argument('method', help="soslasso, iterlasso, lasso, searchlight. ToDo: se
 p.add_argument('-v','--verbose',action='store_true',help="Print parameter details into the stub file as comments.")
 p.add_argument('-H','--hyperband',action='store_true',help="Tweak some parameters to be compatible with a HYPERBAND setup.")
 # Options
-p.add_argument('-m','--metadata',type=str,default='',help="Path to metadata file.")
-p.add_argument('-d','--data',type=str,nargs='+',default=['/path/to/data/s101.mat','/path/to/data/s102.mat'],help='List of paths to include in the data list.')
-p.add_argument('-r','--random_permutations',type=int,default=0,help="If greater than zero, generate a template for doing r random permutations.")
+p.add_argument('-m','--metadata',type=str,help="Path to metadata file.")
+p.add_argument('-d','--data',type=str,nargs='+',help='List of paths to include in the data list.')
+p.add_argument('-r','--random_permutations',type=int,nargs='+',default=[0],help="If greater than zero, generate a template for doing r random permutations. If two arguments are provided, the second specifies how many batches the permutations shuold be split in to.")
 p.add_argument('-k','--kfolds',type=int,default=10,help='Set up k-fold cv for a particular k.')
 p.add_argument('-t','--tuning-error',type=str,nargs='+',default=[],help="Provide path to one or more csv files containing error for multiple hyperparameter configurations. The stub will incorporate the 'best' parameters.")
+p.add_argument('-s','--tuning-stub',type=str,default='',help="Provide path to the stub.yaml file that was used to specify a round of tuning. This can be used in conjunction with --tuning-error to generate a final/stub.yaml.")
 p.add_argument('-a','--argmax',action='store_true',help='When tuning error is provided, this toggles whether to choose the hyperparameter configuration with the maximum objective value [the default is to minimize].')
 p.add_argument('-b','--by',type=str,nargs='+',default=['subject','finalholdout'],help="When tuning error is provided, this specifies which fields to group by when picking the 'best' hyperparameter configuration [the defaults are 'subject','finalholdout'].")
 p.add_argument('-p','--hyperparameters',type=str,nargs='+',default=['lambda'],help="When tuning error is provided, this specifies which fields to treat as hyperparameters when picking the 'best' hyperparameter configuration [the default is 'lambda'].")
@@ -35,10 +38,33 @@ args = p.parse_args()
 
 X = {}
 final = False
+tuningstub = False
 if args.tuning_error:
     final = True
-    if '/path/to/data/s101.mat' in args.data:
-        args.data = []
+    if args.tuning_stub:
+        with open(args.tuning_stub,'rb') as f:
+            tuningstub = yaml.load(f)
+
+        if args.metadata:
+            X['metadata'] = args.metadata
+        else:
+            X['metadata'] = tuningstub['metadata']
+
+        X['bias'] = tuningstub['bias']
+        X['normalize'] = tuningstub['normalize']
+        X['data_var'] = tuningstub['data_var']
+        X['metadata_var'] = tuningstub['metadata_var']
+        X['filters'] = tuningstub['filters']
+        X['cvscheme'] = tuningstub['cvscheme']
+        X['target'] = tuningstub['target']
+        X['target_type'] = tuningstub['target_type']
+        X['sim_source'] = tuningstub['sim_source']
+        X['sim_metric'] = tuningstub['sim_metric']
+        X['tau'] = tuningstub['tau']
+        X['subject_id_fmt'] = tuningstub['subject_id_fmt']
+        X['executable'] = tuningstub['executable']
+        X['wrapper'] = tuningstub['wrapper']
+
     df = pandas.concat([pandas.read_csv(f) for f in args.tuning_error])
     z = pick_best_hyperparameters(df, args.by, args.hyperparameters, args.objective)
     # n = len(args.by + args.hyperparameters)
@@ -47,6 +73,8 @@ if args.tuning_error:
         levels = z.index.levels[i]
         if x == 'subject' and args.data:
             X[x] = [args.data[j] for j in z.index.labels[i]]
+        elif x == 'subject' and tuningstub:
+            X[x] = [tuningstub['data'][j] for j in z.index.labels[i]]
         else:
             X[x] = [levels[j] for j in z.index.labels[i]]
 
@@ -56,8 +84,9 @@ if args.tuning_error:
 stub_text = stub_template.render(HOME=os.getenv('HOME'), method=args.method,
         data=args.data, metadata=args.metadata, r=args.random_permutations,
         k=args.kfolds, hyperband=args.hyperband, verbose=args.verbose, override=X, final=final)
+
 if args.output:
-    with open(args.output, 'w') as h:
+    with open(args.output, 'w', newline='\n') as h:
         h.write(stub_text)
 else:
     sys.stdout.write(stub_text)
