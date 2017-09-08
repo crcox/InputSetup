@@ -17,7 +17,7 @@ QUICKSTUB=File.join(PYSCRIPTDIR,'quickstub')
 # the executable into the working directory. There *must* be some other way to
 # get it to work, but it seemed to be choking on the space in "Program Files",
 # no matter how I quoted it.
-Z7="./7z.exe"
+ZIP="./7z.exe a -spf"
 
 # CRC: SQUIDDIR, DATAFILE, and METAFILE are not being used. Instead, these
 # bits of information are being read from the stub files associated with the
@@ -105,7 +105,7 @@ end
 task :dirs => FINALDIR
 task :stub => FINALDIR + FINALYAML + PERMDIR + PERMYAML
 task :zip => FINALYAML do
-  sh("#{Z7} a -spf stubs.zip #{FINALYAML} #{PERMYAML}") #
+  sh("#{ZIP} stubs.zip #{FINALYAML} #{PERMYAML}") #
 end
 task :clean do
   FINALYAML.zip(PERMYAML).each do |f,p|
@@ -117,7 +117,7 @@ end
 namespace final do
   task :stub => FINALDIR + FINALYAML
   task :zip => FINALYAML do
-    sh("#{Z7} a -spf stubs_final.zip #{FINALYAML}") #
+    sh("#{ZIP} stubs_final.zip #{FINALYAML}") #
   end
   task :clean do
     FINALYAML.each do |f|
@@ -128,7 +128,7 @@ end
 namespace perm do
   task :stub => PERMDIR + PERMYAML
   task :zip => PERMYAML do
-    sh("#{Z7} a -spf stubs_perm.zip #{PERMYAML}") #
+    sh("#{ZIP} stubs_perm.zip #{PERMYAML}") #
   end
   task :clean do
     PERMYAML.each do |p|
@@ -138,6 +138,6 @@ namespace perm do
 end
 namespace tune do
   task :zip
-    sh("#{Z7} a -spf tune_HB.zip #{TUNECSV.flatten}") #
+    sh("#{ZIP} tune_HB.zip #{TUNECSV.flatten}") #
   end
 end
