@@ -35,7 +35,6 @@ p.add_argument('-x','--objective',type=str,default='err1',help="When tuning erro
 p.add_argument('-o','--output',type=str,default='',help="A file to write output to. Output will be YAML formatted. [default is to print to stdout]")
 
 args = p.parse_args()
-
 X = {}
 final = False
 tuningstub = False

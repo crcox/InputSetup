@@ -18,6 +18,7 @@
         'lambda1': [],
         'alpha': [],
         'tau': 0.3,
+        'shape': 'sphere',
         'diameter': 18,
         'overlap': 9,
         'normalize': 'zscore',
@@ -47,8 +48,11 @@
 
     if X['subject']:
         X['data'] = X['subject']
-    else:
+    elif data:
         X['data'] = data
+
+    if metadata:
+        X['metadata'] = metadata
 
     # if not 'subject_id_fmt' in X:
     # Temporarily giving this supreme precedence
@@ -58,6 +62,13 @@
         del X['subject']
     except KeyError:
         pass
+
+    def prefab(x):
+        if isinstance(x,list):
+            return '[' + ','.join(str(i) for i in x) + ']'
+        else:
+            return x
+
 %>
 % if method=="soslasso":
 # SOS LASSO
@@ -89,13 +100,13 @@ regularization: soslasso
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: ${X['bias']}
-alpha: [${','.join(str(i) for i in X['alpha'])}]
-lambda: [${','.join(str(i) for i in X['lambda'])}]
-shape: ${X['shape']}
-diameter: [${','.join(str(i) for i in X['diameter'])}]
-overlap: [${','.join(str(i) for i in X['overlap'])}]
-normalize: ${X['normalize']}
+bias: ${prefab(X['bias'])}
+alpha: ${prefab(X['alpha'])}
+lambda: ${prefab(X['lambda'])}
+shape: ${prefab(X['shape'])}
+diameter: ${prefab(X['diameter'])}
+overlap: ${prefab(X['overlap'])}
+normalize: ${prefab(X['normalize'])}
 % elif method=="lasso":
 # LASSO
 # =====
@@ -382,16 +393,21 @@ wrapper: ${X['wrapper']}
 <% a = r[0] // r[1] %>
 RandomSeed:
 % for j in range(r[1]):
-    - [${','.join(str(i) for i in range(a*j,a*(j+1)))}]
+    - [${','.join(str(i+1) for i in range(a*j,a*(j+1)))}]
 % endfor
 % if r[0] > a*r[1]:
-    - [${','.join(str(i) for i in range(a*r[1],r[0]+1))}]
+    - [${','.join(str(i+1) for i in range(a*r[1],r[0]+1))}]
 % endif
 % else:
 RandomSeed: [${','.join(str(i) for i in range(1,r[0]+1))}]
 % endif
 PermutationTest: True
-PermutationMethod: 'simple'
+PermutationMethod: 'manual'
+% if method == 'nrsa':
+PermutationIndex: ${os.path.join(os.path.dirname(X['metadata']),'PERMUTATION_INDEX.mat')}
+% else:
+PermutationIndex: ${os.path.join(os.path.dirname(X['metadata']),'PERMUTATION_STRUCT.mat')}
+% endif
 RestrictPermutationByCV: false
 % endif
 
