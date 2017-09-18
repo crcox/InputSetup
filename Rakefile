@@ -23,33 +23,33 @@ ZIP="./7z.exe a -spf"
 # bits of information are being read from the stub files associated with the
 # hyperparameter tuning for each analysis.
 #
-# SQUIDDIR = '/squid/crcox/MRI/Manchester/MAT/avg/bystudy'
-# DATAFILE = Rake::FileList[
-#   's01_avg.mat',
-#   's02_avg.mat',
-#   's03_avg.mat',
-#   's04_avg.mat',
-#   's05_avg.mat',
-#   's06_avg.mat',
-#   's07_avg.mat',
-#   's08_avg.mat',
-#   's09_avg.mat',
-#   's10_avg.mat',
-#   's11_avg.mat',
-#   's12_avg.mat',
-#   's13_avg.mat',
-#   's14_avg.mat',
-#   's15_avg.mat',
-#   's16_avg.mat',
-#   's17_avg.mat',
-#   's18_avg.mat',
-#   's19_avg.mat',
-#   's20_avg.mat',
-#   's21_avg.mat',
-#   's22_avg.mat',
-#   's23_avg.mat'
-# ].pathmap("#{SQUIDDIR}/%f")
-# METAFILE = File.join(SQUIDDIR,"metadata_avg_wAnimate.mat")
+SQUIDDIR="/squid/crcox/MRI/Manchester/MAT/avg/bystudy"
+DATAFILE = Rake::FileList[
+  's01_avg.mat',
+  's02_avg.mat',
+  's03_avg.mat',
+  's04_avg.mat',
+  's05_avg.mat',
+  's06_avg.mat',
+  's07_avg.mat',
+  's08_avg.mat',
+  's09_avg.mat',
+  's10_avg.mat',
+  's11_avg.mat',
+  's12_avg.mat',
+  's13_avg.mat',
+  's14_avg.mat',
+  's15_avg.mat',
+  's16_avg.mat',
+  's17_avg.mat',
+  's18_avg.mat',
+  's19_avg.mat',
+  's20_avg.mat',
+  's21_avg.mat',
+  's22_avg.mat',
+  's23_avg.mat'
+].pathmap("#{SQUIDDIR}/%f")
+METAFILE = File.join(SQUIDDIR,"metadata_avg_wAnimate.mat")
 
 RESULTDIR = Rake::FileList[
     'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/A/L1L2/performance/tune',
@@ -113,15 +113,147 @@ RESULTDIR = Rake::FileList[
     'wholebrain/visual/chamfer/chamfer/audio/L1L2/bystudy/performance/tune',
     'wholebrain/visual/chamfer/chamfer/visual/L1L2/bystudy/performance/tune'
 ]
+RESULTDIR_VISUALIZATION = Rake::FileList[
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/A/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AS/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/ASV/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AV/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/S/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/SV/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/V/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/A/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/AS/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/ASV/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/AV/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/S/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/SV/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/V/bystudy/L1L2/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/A/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/AS/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/ASV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/AV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/S/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/SV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/V/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/A/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/AS/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/ASV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/AV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/S/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/SV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/V/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/A/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AS/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/ASV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/S/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/SV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/V/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/A/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/AS/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/ASV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/AV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/S/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/SV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/V/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/A/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/AS/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/ASV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/AV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/S/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/SV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/V/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/A/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/AS/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/ASV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/AV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/S/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/SV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/V/visualization/tune',
+    'wholebrain/semantic/avg/audio/L1L2/bystudy/visualization/tune',
+    'wholebrain/semantic/avg/visual/L1L2/bystudy/visualization/tune',
+    'wholebrain/visual/chamfer/chamfer/audio/L1L2/bystudy/visualization/tune',
+    'wholebrain/visual/chamfer/chamfer/visual/L1L2/bystudy/visualization/tune'
+]
+CONDITIONS = Rake::FileList[
+  {:filters => ['rowfilter_aud','colfilter_aud','NOT_audio','NOT_rain'], :target => 'semantic', :target_type => 'similarity', :sim_source => 'featurenorms', :sim_metric => 'cosine', :data_var => 'audio', :cvholdout, [1,2,3,4,5,6,7,8,9]}, :orientation => 'orig', :regularization => },
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AS/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/ASV/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AV/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/S/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/SV/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/V/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/A/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/AS/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/ASV/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/AV/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/S/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/SV/bystudy/L1L2/visualization/tune',
+    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/V/bystudy/L1L2/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/A/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/AS/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/ASV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/AV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/S/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/SV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/V/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/A/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/AS/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/ASV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/AV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/S/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/SV/visualization/tune',
+    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/V/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/A/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AS/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/ASV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/S/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/SV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/V/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/A/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/AS/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/ASV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/AV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/S/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/SV/visualization/tune',
+    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/V/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/A/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/AS/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/ASV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/AV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/S/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/SV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/V/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/A/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/AS/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/ASV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/AV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/S/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/SV/visualization/tune',
+    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/V/visualization/tune',
+    'wholebrain/semantic/avg/audio/L1L2/bystudy/visualization/tune',
+    'wholebrain/semantic/avg/visual/L1L2/bystudy/visualization/tune',
+    'wholebrain/visual/chamfer/chamfer/audio/L1L2/bystudy/visualization/tune',
+    'wholebrain/visual/chamfer/chamfer/visual/L1L2/bystudy/visualization/tune'
+]
 TUNECSV = RESULTDIR.collect{|c| Rake::FileList["#{c}/HB_?.csv"]}
 FINALDIR = RESULTDIR.pathmap("%d/final")
 PERMDIR = RESULTDIR.pathmap("%d/permutations")
 FINALYAML = FINALDIR.pathmap("%p/stub.yaml")
 PERMYAML = PERMDIR.pathmap("%p/stub.yaml")
+TUNEYAML_VISUALIZATION = RESULTDIR_VISUALIZATION.pathmap("%p/HB_0/stub.yaml")
 
 FINALDIR.zip(PERMDIR).each do |d,p|
   directory d
   directory p
+end
+
+cmd = "python #{QUICKSTUB}"
+TUNEYAML_VISUALIZATION.zip(TUNECSV,RESULTDIR).each do |final,tune,td|
+  file final => tune do
+    file sh("#{cmd} -s #{td}/HB_0/stub.yaml -t #{tune.join(' ')} -b subject finalholdout -p lambda -x err1 -o #{final} -- nrsa")
+  end
 end
 
 cmd = "python #{QUICKSTUB}"
@@ -172,7 +304,13 @@ namespace :perm do
   end
 end
 namespace :tune do
-  task :zip => TUNECSV do
+  namespace :performance do
+    task :stub
+  end
+  namespace :visualization do
+    task :stub => TUNEYAML_VISUALIZE
+  end
+  task :zip => TUNECSV.flatten do
     sh("#{ZIP} tune_HB.zip #{TUNECSV.flatten}")
   end
 end
