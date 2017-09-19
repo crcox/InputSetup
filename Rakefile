@@ -1,4 +1,7 @@
 require 'rake'
+require 'yaml'
+require 'tempfile'
+require 'fileutils'
 # CRC: This was having a hard time using 7zip
 # require 'rake/packagetask'
 # CRC: In my current development environment (Windows 7, Ruby 2.3.3p222
@@ -11,7 +14,8 @@ require 'rake'
 # CRC: Despite adding PYSCRIPTDIR to my Windows environment, sh() was unable to
 # locate quickstub. So I have specified it here, and all references to my
 # Python scripts will utilize the full absolute path.
-PYSCRIPTDIR='C:/Users/mbmhscc4/AppData/Roaming/Python/Python36/Scripts'
+# PYSCRIPTDIR='C:/Users/mbmhscc4/AppData/Roaming/Python/Python36/Scripts'
+PYSCRIPTDIR='C:\Users\coxcr\Documents\GitHub\condortools'
 QUICKSTUB=File.join(PYSCRIPTDIR,'quickstub')
 # CRC: It was a giant hassle to sh() to propperly call 7zip. I ended up copying
 # the executable into the working directory. There *must* be some other way to
@@ -175,67 +179,90 @@ RESULTDIR_VISUALIZATION = Rake::FileList[
     'wholebrain/visual/chamfer/chamfer/audio/L1L2/bystudy/visualization/tune',
     'wholebrain/visual/chamfer/chamfer/visual/L1L2/bystudy/visualization/tune'
 ]
-CONDITIONS = Rake::FileList[
-  {:filters => ['rowfilter_aud','colfilter_aud','NOT_audio','NOT_rain'], :target => 'semantic', :target_type => 'similarity', :sim_source => 'featurenorms', :sim_metric => 'cosine', :data_var => 'audio', :cvholdout, [1,2,3,4,5,6,7,8,9]}, :orientation => 'orig', :regularization => },
-    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AS/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/ASV/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AV/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/S/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/SV/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/V/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/A/bystudy/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/AS/bystudy/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/ASV/bystudy/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/AV/bystudy/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/S/bystudy/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/SV/bystudy/L1L2/visualization/tune',
-    'lesion/semantic/similarity/featurenorms/cosine/visual/avg/V/bystudy/L1L2/visualization/tune',
-    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/A/visualization/tune',
-    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/AS/visualization/tune',
-    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/ASV/visualization/tune',
-    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/AV/visualization/tune',
-    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/S/visualization/tune',
-    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/SV/visualization/tune',
-    'lesion/visual/chamfer/chamfer/audio/L1L2/bystudy/V/visualization/tune',
-    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/A/visualization/tune',
-    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/AS/visualization/tune',
-    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/ASV/visualization/tune',
-    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/AV/visualization/tune',
-    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/S/visualization/tune',
-    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/SV/visualization/tune',
-    'lesion/visual/chamfer/chamfer/visual/L1L2/bystudy/V/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/A/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AS/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/ASV/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/AV/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/S/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/SV/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/audio/avg/bystudy/V/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/A/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/AS/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/ASV/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/AV/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/S/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/SV/visualization/tune',
-    'roi/semantic/similarity/featurenorms/cosine/visual/avg/bystudy/V/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/A/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/AS/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/ASV/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/AV/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/S/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/SV/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/audio/avg/bystudy/V/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/A/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/AS/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/ASV/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/AV/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/S/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/SV/visualization/tune',
-    'roi/visual/similarity/chamfer/chamfer/visual/avg/bystudy/V/visualization/tune',
-    'wholebrain/semantic/avg/audio/L1L2/bystudy/visualization/tune',
-    'wholebrain/semantic/avg/visual/L1L2/bystudy/visualization/tune',
-    'wholebrain/visual/chamfer/chamfer/audio/L1L2/bystudy/visualization/tune',
-    'wholebrain/visual/chamfer/chamfer/visual/L1L2/bystudy/visualization/tune'
+HYPERPARAMETERS = {
+  :bias => 1,
+  :normalize => 'zscore',
+  :lambda => {
+    :distribution => 'uniform',
+    :args => [1,16]},
+  :HYPERBAND => {
+    :budget => 100,
+    :aggressiveness => 3,
+    :hyperparameters => ['lambda']},
+  :cvscheme => 1,
+  :cvholdout => [1,2,3,4,5,6,7,8,9],
+  :finalholdout => 0,
+  :metadata_var => 'metadata',
+  :orientation => 'orig',
+  :target_type => 'similarity',
+  :SmallFootprint => 1,
+  :executable => '/home/crcox/src/WholeBrain_RSA/bin/R2014b/WholeBrain_RSA',
+  :wrapper => '/home/crcox/src/WholeBrain_RSA/run_WholeBrain_RSA.sh',
+  :EXPAND => ['data','cvholdout'],
+  :COPY => ['executable', 'wrapper'],
+  :URLS => ['data', 'metadata']
+}
+CONDITIONS = [
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_semantic','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_semantic','LESION_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_semantic','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_semantic','LESION_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_semantic','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_semantic','LESION_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_semantic','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_semantic','LESION_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_semantic','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_semantic','LESION_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_semantic','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_semantic','LESION_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','LESION_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_semantic','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_semantic','LESION_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_audio','LESION_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_semantic','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_semantic','LESION_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','LESION_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','ROI_audio','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_semantic'],'NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_semantic','ROI_visual'],'NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_visual'],'NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','ROI_semantic','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud',['ROI_semantic','ROI_visual'],'NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','ROI_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','ROI_audio','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_semantic'],'NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_semantic','ROI_visual'],'NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_visual'],'NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','ROI_semantic','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud',['ROI_semantic','ROI_visual'],'NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','ROI_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','ROI_audio','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_semantic'],'NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_semantic','ROI_visual'],'NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_visual'],'NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','ROI_semantic','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud',['ROI_semantic','ROI_visual'],'NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','ROI_visual','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','ROI_audio','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_semantic'],'NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_semantic','ROI_visual'],'NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud',['ROI_audio','ROI_visual'],'NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','ROI_semantic','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud',['ROI_semantic','ROI_visual'],'NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_aud','colfilter_aud','ROI_visual','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','NOT_rain']},
+  {:tau => 0.3, :target => 'semantic', :sim_source => 'featurenorms', :sim_metric => 'cosine',  :data_var => 'visual', :filters => ['rowfilter_vis','colfilter_vis','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'audio',  :filters => ['rowfilter_aud','colfilter_aud','NOT_rain']},
+  {:tau => 0.2, :target => 'visual',   :sim_source => 'chamfer',      :sim_metric => 'chamfer', :data_var => 'visual', :filters => ['rowfilter_vis','colfilter_vis','NOT_rain']}
 ]
 TUNECSV = RESULTDIR.collect{|c| Rake::FileList["#{c}/HB_?.csv"]}
 FINALDIR = RESULTDIR.pathmap("%d/final")
@@ -250,22 +277,31 @@ FINALDIR.zip(PERMDIR).each do |d,p|
 end
 
 cmd = "python #{QUICKSTUB}"
-TUNEYAML_VISUALIZATION.zip(TUNECSV,RESULTDIR).each do |final,tune,td|
-  file final => tune do
-    file sh("#{cmd} -s #{td}/HB_0/stub.yaml -t #{tune.join(' ')} -b subject finalholdout -p lambda -x err1 -o #{final} -- nrsa")
+TUNEYAML_VISUALIZATION.zip(CONDITIONS,RESULTDIR_VISUALIZATION).each do |stub,condition|
+  file stub do
+    d = File.dirname(stub)
+    FileUtils.mkdir_p(d)
+    tmpyaml = Tempfile.new(['config','.yaml'])
+    begin
+      tmpyaml.write(condition.merge(HYPERPARAMETERS).to_yaml)
+      sh("#{cmd} -c #{tmpyaml.path} -o #{stub} -- nrsa")
+    ensure
+      tmpyaml.close
+      tmpyaml.unlink
+    end
   end
 end
 
 cmd = "python #{QUICKSTUB}"
 FINALYAML.zip(TUNECSV,RESULTDIR).each do |final,tune,td|
   file final => tune do
-    file sh("#{cmd} -s #{td}/HB_0/stub.yaml -t #{tune.join(' ')} -b subject finalholdout -p lambda -x err1 -o #{final} -- nrsa")
+    sh("#{cmd} -s #{td}/HB_0/stub.yaml -t #{tune.join(' ')} -b subject finalholdout -p lambda -x err1 -o #{final} -- nrsa")
   end
 end
 
 PERMYAML.zip(TUNECSV,RESULTDIR).each do |perm,tune,td|
   file perm => tune do
-    file sh("#{cmd} -s #{td}/HB_0/stub.yaml -t #{tune.join(' ')} -r 100 10 -b subject finalholdout -p lambda -x err1 -o #{perm} -- nrsa")
+    sh("#{cmd} -s #{td}/HB_0/stub.yaml -t #{tune.join(' ')} -r 100 10 -b subject finalholdout -p lambda -x err1 -o #{perm} -- nrsa")
   end
 end
 
@@ -308,7 +344,7 @@ namespace :tune do
     task :stub
   end
   namespace :visualization do
-    task :stub => TUNEYAML_VISUALIZE
+    task :stub => TUNEYAML_VISUALIZATION
   end
   task :zip => TUNECSV.flatten do
     sh("#{ZIP} tune_HB.zip #{TUNECSV.flatten}")
