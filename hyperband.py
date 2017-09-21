@@ -1,6 +1,7 @@
 # you need to write the following hooks for your custom problem
 #from problem import get_random_hyperparameter_configuration,run_then_return_val_loss
 from numpy import argsort, ceil, log, random
+import pandas
 def get_random_hyperparameter_configuration(distribution, args):
     if distribution == 'uniform':
         return random.uniform(low = args[0], high = args[1])
@@ -23,9 +24,23 @@ def hyperband(max_iter, eta):
 
     return BRACKET
 
-def pick_best_hyperparameters(df, by, hyperparameters, objective):
+def filter_by(df, constraints):
+    """Filter MultiIndex by sublevels."""
+    indexer = [constraints[name] if name in constraints else slice(None)
+               for name in df.index.names]
+    return df.loc[tuple(indexer)] if len(df.shape) == 1 else df.loc[tuple(indexer),]
+
+pandas.Series.filter_by = filter_by
+pandas.DataFrame.filter_by = filter_by
+def pick_best_hyperparameters(df, by, hyperparameters, objective, maximize):
     x = df.groupby(by + hyperparameters).agg({objective: 'mean'})
-    y = x.groupby(by).idxmin()
+
+    if maximize:
+        y = x.groupby(by).idxmax()
+    else: # minimize
+        y = x.groupby(by).idxmin()
+
+    print(y)
     for i,h in enumerate(hyperparameters):
         kwargs = {h: [x[len(by)+i] for x in y[objective]]}
         y = y.assign(**kwargs)
