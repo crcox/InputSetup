@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
-from builtins import open
+from io import open
 import argparse
 import os
 import sys

@@ -92,6 +92,10 @@ if 'HYPERBAND' in stub:
     stub['BRACKETS'] = BRACKETS
     stub['EXPAND'].append(['BRACKETS'] + hyperparams)
 
+    print("Writing stub_hb.yaml...")
+    with open('stub_hb.yaml', 'w') as f:
+        yaml.dump({k:v for k,v in stub.items() if k!='HYPERBAND'}, f)
+
 #############################################################
 #         Copy files to be shared into ./shared             #
 #############################################################
@@ -165,7 +169,6 @@ if FLAG_WRITEMASTER:
     print("Writing master.yaml...")
     with open('master.yaml', 'w') as f:
         yaml.dump_all(master, f)
-
 
 #############################################################
 #              Setup individual jobs structure              #
