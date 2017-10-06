@@ -391,8 +391,9 @@ RandomSeed:
 RandomSeed: [${','.join(str(i) for i in range(1,r[0]+1))}]
 % endif
 PermutationTest: True
-PermutationMethod: 'simple'
+PermutationMethod: 'manual'
 RestrictPermutationByCV: false
+PermutationIndex: ${os.path.join(os.path.dirname(X['metadata']),'PERMUTATION_INDEX.mat')}
 % endif
 
 # condortools/setupJob Options
@@ -448,3 +449,6 @@ COPY:
 URLS:
   - data
   - metadata
+% if r[0] > 0:
+  - PermutationIndex
+% endif
