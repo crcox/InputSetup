@@ -40,7 +40,6 @@ def pick_best_hyperparameters(df, by, hyperparameters, objective, maximize):
     else: # minimize
         y = x.groupby(by).idxmin()
 
-    print(y)
     for i,h in enumerate(hyperparameters):
         kwargs = {h: [x[len(by)+i] for x in y[objective]]}
         y = y.assign(**kwargs)

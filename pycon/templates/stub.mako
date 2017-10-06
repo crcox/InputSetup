@@ -49,8 +49,13 @@
         X['sim_source'] = "featurenorms"
         X['sim_metric'] = "cosine"
 
-    for x in override:
-        X[x] = override[x]
+    X['COPY'].append('executable')
+    X['COPY'].append('wrapper')
+    X['URLS'].append('data')
+    X['URLS'].append('metadata')
+
+    for k,v in override.items():
+        X[k] = v
 
     if X['subject']:
         X['data'] = X['subject']
@@ -69,12 +74,19 @@
     except KeyError:
         pass
 
+    if r[0] > 0 and not 'PermutationIndex' in X:
+        if method == 'nrsa':
+            X['PermutationIndex'] = os.path.dirname(X['metadata'])+'/PERMUTATION_INDEX.mat'
+        else:
+            X['PermutationIndex'] = os.path.dirname(X['metadata'])+'/PERMUTATION_STRUCT.mat'
+
+        X['URLS'].append('PermutationIndex')
+
     def prefab(x):
         if isinstance(x,list):
             if len(x)>1 or len(x) == 0:
                 return '[' + ','.join(str(i) for i in x) + ']'
             else:
-                print('hi hi hi hi')
                 return x[0]
         else:
             return x
@@ -415,11 +427,7 @@ RandomSeed: [${','.join(str(i) for i in range(1,r[0]+1))}]
 % endif
 PermutationTest: True
 PermutationMethod: 'manual'
-% if method == 'nrsa':
-PermutationIndex: ${os.path.join(os.path.dirname(X['metadata']),'PERMUTATION_INDEX.mat')}
-% else:
-PermutationIndex: ${os.path.join(os.path.dirname(X['metadata']),'PERMUTATION_STRUCT.mat')}
-% endif
+PermutationIndex: ${X['PermutationIndex']}
 RestrictPermutationByCV: false
 % endif
 
@@ -473,14 +481,14 @@ EXPAND:
 # URLS: []
 # or remove them all together.
 % endif
-% if X['COPY']:
+% if 'COPY' in X:
 COPY: ${yaml.dump(X['COPY'], default_flow_style=True)[0:-1]}
 % else:
 COPY:
   - executable
   - wrapper
 % endif
-% if X['URLS']:
+% if 'URLS' in X:
 URLS: ${yaml.dump(X['URLS'], default_flow_style=True)[0:-1]}
 % else:
 URLS:

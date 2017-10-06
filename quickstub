@@ -69,7 +69,6 @@ if args.tuning_error:
     df = pandas.concat([pandas.read_csv(f) for f in args.tuning_error])
 
     if args.method in ['soslasso','lasso']:
-        print(args.method)
         df['diff'] = (df['h1']/df['nt1']) - (df['f1']/df['nd1'])
 
     z = pick_best_hyperparameters(df, args.by, args.hyperparameters, args.objective, args.argmax)
@@ -94,13 +93,12 @@ if args.tuning_error:
 
 
     for i,x in enumerate(args.hyperparameters):
-        X[x] = z[x].values
+        X[x] = z[x].values.tolist()
 
 if args.config_stub:
     with open(args.config_stub,'rb') as f:
         X = yaml.load(f)
 
-print(X)
 try:
     stub_text = stub_template.render(HOME=os.getenv('HOME'), method=args.method,
             data=args.data, metadata=args.metadata, r=args.random_permutations,
