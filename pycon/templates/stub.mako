@@ -1,5 +1,5 @@
 <%
-    import os,re
+    import os,re,yaml
     HOME = os.path.expanduser('~')
     if method in ['lasso','iterlasso','soslasso','searchlight']:
         suffix='MVPA'
@@ -13,11 +13,14 @@
         'metadata_var': 'metadata',
         'filters': ['rowfilter',['colfilterA','colfilterB'],'colfilterC'],
         'cvscheme': 1,
+        'cvholdout': [],
         'bias': 1,
         'lambda': [],
         'lambda1': [],
+        'LambdaSeq': "inf",
         'alpha': [],
         'tau': 0.3,
+        'shape': 'sphere',
         'diameter': 18,
         'overlap': 9,
         'normalize': 'zscore',
@@ -25,11 +28,15 @@
         'finalholdout': [],
         'orientation': 'orig',
         'executable': "{:s}/src/WholeBrain_{:s}/bin/WholeBrain_{:s}".format(HOME,suffix,suffix),
-        'wrapper': "{:s}/src/WholeBrain_{:s}/run_WholeBrain_{:s}.sh".format(HOME,suffix,suffix)
+        'wrapper': "{:s}/src/WholeBrain_{:s}/run_WholeBrain_{:s}.sh".format(HOME,suffix,suffix),
+        'SmallFootprint': 0,
+        'EXPAND': [],
+        'COPY': [],
+        'URLS': []
     }
 
     try:
-        X['finalholdout'] = range(1,k+1)
+        X['finalholdout'] = [i for i in range(1,k+1)]
     except:
         pass
 
@@ -47,8 +54,11 @@
 
     if X['subject']:
         X['data'] = X['subject']
-    else:
+    elif data:
         X['data'] = data
+
+    if metadata:
+        X['metadata'] = metadata
 
     # if not 'subject_id_fmt' in X:
     # Temporarily giving this supreme precedence
@@ -58,6 +68,17 @@
         del X['subject']
     except KeyError:
         pass
+
+    def prefab(x):
+        if isinstance(x,list):
+            if len(x)>1 or len(x) == 0:
+                return '[' + ','.join(str(i) for i in x) + ']'
+            else:
+                print('hi hi hi hi')
+                return x[0]
+        else:
+            return x
+
 %>
 % if method=="soslasso":
 # SOS LASSO
@@ -89,13 +110,13 @@ regularization: soslasso
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: ${X['bias']}
-alpha: [${','.join(str(i) for i in X['alpha'])}]
-lambda: [${','.join(str(i) for i in X['lambda'])}]
-shape: ${X['shape']}
-diameter: [${','.join(str(i) for i in X['diameter'])}]
-overlap: [${','.join(str(i) for i in X['overlap'])}]
-normalize: ${X['normalize']}
+bias: ${prefab(X['bias'])}
+alpha: ${prefab(X['alpha'])}
+lambda: ${prefab(X['lambda'])}
+shape: ${prefab(X['shape'])}
+diameter: ${prefab(X['diameter'])}
+overlap: ${prefab(X['overlap'])}
+normalize: ${prefab(X['normalize'])}
 % elif method=="lasso":
 # LASSO
 # =====
@@ -120,9 +141,9 @@ regularization: lasso_glmnet
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: ${X['bias']}
-lambda: [${','.join(str(i) for i in X['lambda'])}]
-normalize: ${X['normalize']}
+bias: ${prefab(X['bias'])}
+lambda: ${prefab(X['lambda'])}
+normalize: ${prefab(X['normalize'])}
 % elif method=="iterlasso":
 # ITERATIVE LASSO
 # ===============
@@ -147,9 +168,9 @@ regularization: iterlasso_glmnet
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: ${X['bias']}
-lambda: [${','.join(str(i) for i in X['lambda'])}]
-normalize: ${X['normalize']}
+bias: ${prefab(X['bias'])}
+lambda: ${prefab(X['lambda'])}
+normalize: ${prefab(X['normalize'])}
 % elif method=="searchlight":
 # SEARCHLIGHT
 # ===========
@@ -198,10 +219,9 @@ regularization: L1L2
 # alpha scales the SOS Lasso penalty associated with picking items from
 # different groups.
 #
-# lambda scales ... (need to remember)
-#
-# lambda1 scales the overall sparsity penalty.
-# LambdaSeq ... (need to remember)
+# lambda is that standard group lasso penalty
+# lambda1 is unique to GrOWL
+# LambdaSeq is unique to GrOWL
 #
 # normalize allows you to specify a normalization method to apply to your data
 # before fitting models. zscore is recommended (subtract mean and divide by
@@ -209,22 +229,19 @@ regularization: L1L2
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: ${X['bias']}
-normalize: ${X['normalize']}
+bias: ${prefab(X['bias'])}
+normalize: ${prefab(X['normalize'])}
 % if hyperband:
-lambda: {'distribution': 'uniform', 'args': [1, 16]}
+lambda: ${yaml.dump(X['lambda'], default_flow_style=True)[0:-1]}
 # Uncomment if using GrOWL
-# LambdaSeq: "inf" 
+# LambdaSeq: ${prefab(X['LambdaSeq'])}
 # lambda1: {'distribution': 'uniform', 'args': [1, 16]}
-HYPERBAND:
-  budget: 100
-  aggressiveness: 3
-  hyperparameters: ['lambda']
+HYPERBAND: ${yaml.dump(X['HYPERBAND'], default_flow_style=True)[0:-1]}
 % else:
-lambda: [${','.join(str(i) for i in X['lambda'])}]
+lambda: ${prefab(X['lambda'])}
 # Uncomment if using GrOWL
-# LambdaSeq: "inf" 
-# lambda1: []
+# LambdaSeq: ${prefab(X['LambdaSeq'])}
+# lambda1: ${prefab(X['lambda1'])}
 % endif
 % endif
 
@@ -281,20 +298,26 @@ metadata_var: ${X['metadata_var']}
 # with the optimal parameters, there are parts of the data that had nothing to
 # do with the parameter selection.
 % endif
-cvscheme: ${X['cvscheme']}
 % if method in ['soslasso','nrsa','searchlightrsa']:
 % if final:
+cvscheme: ${X['cvscheme']}
 cvholdout: [${','.join(str(i) for i in X['finalholdout'])}]
 finalholdout: 0
+% elif X['cvholdout']:
+cvscheme: ${X['cvscheme']}
+cvholdout: ${prefab(X['cvholdout'])}
+finalholdout: ${prefab(X['finalholdout'])}
 % else:
+cvscheme: ${X['cvscheme']}
 cvholdout:
 % for j in range(1,k+1):
   - [${','.join(str(i) for i in range(1,k+1) if not i == j)}]
 % endfor
-finalholdout: [${','.join(str(i) for i in range(1,k+1))}]
+finalholdout: ${prefab(X['finalholdout'])}
 % endif
 % else:
-cvholdout: [${','.join(str(i) for i in range(1,k+1))}]
+cvscheme: ${X['cvscheme']}
+cvholdout: ${prefab(X['cvholdout'])}
 finalholdout: 0
 % endif
 
@@ -372,7 +395,7 @@ filters:
 # If you are not running on HTCondor, you can drop the executable and wrapper
 # lines.
 % endif
-SmallFootprint: 0
+SmallFootprint: ${X['SmallFootprint']}
 SaveResultsAs: mat
 subject_id_fmt: ${X['subject_id_fmt']}
 executable: ${X['executable']}
@@ -382,18 +405,22 @@ wrapper: ${X['wrapper']}
 <% a = r[0] // r[1] %>
 RandomSeed:
 % for j in range(r[1]):
-    - [${','.join(str(i) for i in range(a*j,a*(j+1)))}]
+    - [${','.join(str(i+1) for i in range(a*j,a*(j+1)))}]
 % endfor
 % if r[0] > a*r[1]:
-    - [${','.join(str(i) for i in range(a*r[1],r[0]+1))}]
+    - [${','.join(str(i+1) for i in range(a*r[1],r[0]+1))}]
 % endif
 % else:
 RandomSeed: [${','.join(str(i) for i in range(1,r[0]+1))}]
 % endif
 PermutationTest: True
 PermutationMethod: 'manual'
-RestrictPermutationByCV: false
+% if method == 'nrsa':
 PermutationIndex: ${os.path.join(os.path.dirname(X['metadata']),'PERMUTATION_INDEX.mat')}
+% else:
+PermutationIndex: ${os.path.join(os.path.dirname(X['metadata']),'PERMUTATION_STRUCT.mat')}
+% endif
+RestrictPermutationByCV: false
 % endif
 
 # condortools/setupJob Options
@@ -427,10 +454,13 @@ PermutationIndex: ${os.path.join(os.path.dirname(X['metadata']),'PERMUTATION_IND
 # retrieve files from a proxy server). These operations happen after EXPAND
 # takes effect, so lists of files can be distributed to specific jobs.
 % endif
+% if X['EXPAND']:
+EXPAND: ${yaml.dump(X['EXPAND'], default_flow_style=True)[0:-1]}
+% elif final:
 EXPAND:
-% if final:
   - [data, cvholdout, lambda]
 % else:
+EXPAND:
   - data
   - [finalholdout, cvholdout]
 % endif
@@ -443,12 +473,17 @@ EXPAND:
 # URLS: []
 # or remove them all together.
 % endif
+% if X['COPY']:
+COPY: ${yaml.dump(X['COPY'], default_flow_style=True)[0:-1]}
+% else:
 COPY:
   - executable
   - wrapper
+% endif
+% if X['URLS']:
+URLS: ${yaml.dump(X['URLS'], default_flow_style=True)[0:-1]}
+% else:
 URLS:
   - data
   - metadata
-% if r[0] > 0:
-  - PermutationIndex
 % endif

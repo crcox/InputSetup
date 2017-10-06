@@ -9,6 +9,7 @@ import pkg_resources
 import yaml
 from hyperband import pick_best_hyperparameters
 from mako.template import Template
+from mako import exceptions
 resource_package = 'pycon'
 
 resource_path_stub = os.path.join('templates','stub.mako')
@@ -28,6 +29,7 @@ p.add_argument('-r','--random_permutations',type=int,nargs='+',default=[0],help=
 p.add_argument('-k','--kfolds',type=int,default=10,help='Set up k-fold cv for a particular k.')
 p.add_argument('-t','--tuning-error',type=str,nargs='+',default=[],help="Provide path to one or more csv files containing error for multiple hyperparameter configurations. The stub will incorporate the 'best' parameters.")
 p.add_argument('-s','--tuning-stub',type=str,default='',help="Provide path to the stub.yaml file that was used to specify a round of tuning. This can be used in conjunction with --tuning-error to generate a final/stub.yaml.")
+p.add_argument('-c','--config-stub',type=str,default='',help="Provide path to a yaml file that will define how to generate the tuning stub.")
 p.add_argument('-a','--argmax',action='store_true',help='When tuning error is provided, this toggles whether to choose the hyperparameter configuration with the maximum objective value [the default is to minimize].')
 p.add_argument('-b','--by',type=str,nargs='+',default=['subject','finalholdout'],help="When tuning error is provided, this specifies which fields to group by when picking the 'best' hyperparameter configuration [the defaults are 'subject','finalholdout'].")
 p.add_argument('-p','--hyperparameters',type=str,nargs='+',default=['lambda'],help="When tuning error is provided, this specifies which fields to treat as hyperparameters when picking the 'best' hyperparameter configuration [the default is 'lambda'].")
@@ -35,7 +37,6 @@ p.add_argument('-x','--objective',type=str,default='err1',help="When tuning erro
 p.add_argument('-o','--output',type=str,default='',help="A file to write output to. Output will be YAML formatted. [default is to print to stdout]")
 
 args = p.parse_args()
-
 X = {}
 final = False
 tuningstub = False
@@ -66,24 +67,48 @@ if args.tuning_error:
         X['wrapper'] = tuningstub['wrapper']
 
     df = pandas.concat([pandas.read_csv(f) for f in args.tuning_error])
-    z = pick_best_hyperparameters(df, args.by, args.hyperparameters, args.objective)
+
+    if args.method in ['soslasso','lasso']:
+        print(args.method)
+        df['diff'] = (df['h1']/df['nt1']) - (df['f1']/df['nd1'])
+
+    z = pick_best_hyperparameters(df, args.by, args.hyperparameters, args.objective, args.argmax)
     # n = len(args.by + args.hyperparameters)
     # z = y.assign(hyper_min=[x[len(args.by):n] for x in z[args.objective]).drop(args.objective, 1)
     for i,x in enumerate(args.by):
-        levels = z.index.levels[i]
-        if x == 'subject' and args.data:
-            X[x] = [args.data[j] for j in z.index.labels[i]]
-        elif x == 'subject' and tuningstub:
-            X[x] = [tuningstub['data'][j] for j in z.index.labels[i]]
+        if len(args.by) > 1:
+            levels = z.index.levels[i]
+            if x == 'subject' and args.data:
+                X[x] = [args.data[j] for j in z.index.labels[i]]
+            elif x == 'subject' and tuningstub:
+                X[x] = [tuningstub['data'][j] for j in z.index.labels[i]]
+            else:
+                X[x] = [levels[j] for j in z.index.labels[i]]
         else:
-            X[x] = [levels[j] for j in z.index.labels[i]]
+            if x == 'subject' and args.data:
+                X[x] = [args.data[j] for j in z.index]
+            elif x == 'subject' and tuningstub:
+                X[x] = [tuningstub['data'][j] for j in z.index]
+            else:
+                X[x] = list(z.index)
+
 
     for i,x in enumerate(args.hyperparameters):
         X[x] = z[x].values
 
-stub_text = stub_template.render(HOME=os.getenv('HOME'), method=args.method,
-        data=args.data, metadata=args.metadata, r=args.random_permutations,
-        k=args.kfolds, hyperband=args.hyperband, verbose=args.verbose, override=X, final=final)
+if args.config_stub:
+    with open(args.config_stub,'rb') as f:
+        X = yaml.load(f)
+
+print(X)
+try:
+    stub_text = stub_template.render(HOME=os.getenv('HOME'), method=args.method,
+            data=args.data, metadata=args.metadata, r=args.random_permutations,
+            k=args.kfolds, hyperband=args.hyperband, verbose=args.verbose, override=X, final=final)
+except:
+    with open('mako_error.html', 'wb') as f:
+        f.write(exceptions.html_error_template().render())
+    raise
 
 if args.output:
     with open(args.output, 'w', newline='\n') as h:
