@@ -54,8 +54,8 @@
     X['URLS'].append('data')
     X['URLS'].append('metadata')
 
-    for k,v in override.items():
-        X[k] = v
+    for key,v in override.items():
+        X[key] = v
 
     if X['subject']:
         X['data'] = X['subject']
@@ -122,9 +122,15 @@ regularization: soslasso
 # without recentering, and 2norm will subtract the mean and divide by the
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
-bias: ${prefab(X['bias'])}
+% if hyperband:
+alpha: ${yaml.dump(X['alpha'], default_flow_style=True)[0:-1]}
+lambda: ${yaml.dump(X['lambda'], default_flow_style=True)[0:-1]}
+HYPERBAND: ${yaml.dump(X['HYPERBAND'], default_flow_style=True)[0:-1]}
+% else:
 alpha: ${prefab(X['alpha'])}
 lambda: ${prefab(X['lambda'])}
+% endif
+bias: ${prefab(X['bias'])}
 shape: ${prefab(X['shape'])}
 diameter: ${prefab(X['diameter'])}
 overlap: ${prefab(X['overlap'])}

@@ -147,14 +147,16 @@ with open(URLS,'w') as f:
         if isinstance(stub[field],list):
             SourceList = stub[field]
             for iSource,source in enumerate(SourceList):
-                f.write(source+'\n')
+                source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
+                f.write(source_stripped+'\n')
                 if FLAG_LOCALDATA:
                     stub[field][iSource] = os.path.basename(source)
                 else:
                     stub[field][iSource] = os.path.normpath(os.path.join('..',sharedir,os.path.basename(source)))
         else:
             source = stub[field]
-            f.write(source+'\n')
+            source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
+            f.write(source_stripped+'\n')
             if FLAG_LOCALDATA:
                 stub[field] = os.path.basename(source)
             else:
