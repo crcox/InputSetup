@@ -74,7 +74,7 @@
     except KeyError:
         pass
 
-    if r[0] > 0 and not 'PermutationIndex' in X:
+    if (r[0] > 0 or ('RandomSeed' in X)) and not 'PermutationIndex' in X:
         if method == 'nrsa':
             X['PermutationIndex'] = os.path.dirname(X['metadata'])+'/PERMUTATION_INDEX.mat'
         else:
@@ -431,6 +431,12 @@ RandomSeed:
 % else:
 RandomSeed: [${','.join(str(i) for i in range(1,r[0]+1))}]
 % endif
+PermutationTest: True
+PermutationMethod: 'manual'
+PermutationIndex: ${X['PermutationIndex']}
+RestrictPermutationByCV: false
+% elif 'RandomSeed' in X and X['RandomSeed']:
+RandomSeed: ${X['RandomSeed']}
 PermutationTest: True
 PermutationMethod: 'manual'
 PermutationIndex: ${X['PermutationIndex']}

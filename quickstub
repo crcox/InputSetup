@@ -80,7 +80,10 @@ if args.tuning_error:
             if x == 'subject' and args.data:
                 X[x] = [args.data[j] for j in z.index.labels[i]]
             elif x == 'subject' and tuningstub:
-                X[x] = [tuningstub['data'][j] for j in z.index.labels[i]]
+                if isinstance(tuningstub['data'], list):
+                    X[x] = [tuningstub['data'][j] for j in z.index.labels[i]]
+                else:
+                    X[x] = [tuningstub['data'] for j in z.index.labels[i]]
             else:
                 X[x] = [levels[j] for j in z.index.labels[i]]
         else:
@@ -91,7 +94,6 @@ if args.tuning_error:
             else:
                 X[x] = list(z.index)
 
-
     for i,x in enumerate(args.hyperparameters):
         X[x] = z[x].values.tolist()
 
@@ -99,6 +101,7 @@ if args.config_stub:
     with open(args.config_stub,'rb') as f:
         X = yaml.load(f)
 
+print(args)
 try:
     stub_text = stub_template.render(HOME=os.getenv('HOME'), method=args.method,
             data=args.data, metadata=args.metadata, r=args.random_permutations,
