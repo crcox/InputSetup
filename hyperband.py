@@ -33,18 +33,14 @@ def filter_by(df, constraints):
 pandas.Series.filter_by = filter_by
 pandas.DataFrame.filter_by = filter_by
 def pick_best_hyperparameters(df, by, hyperparameters, objective, maximize):
-    x = df.groupby(by + hyperparameters).agg({objective: 'mean'})
+    x = df.groupby(by + hyperparameters).agg({objective: 'mean'}).reset_index()
 
     if maximize:
-        y = x.groupby(by).idxmax()
+        y = x.groupby(by).idxmax()[objective]
     else: # minimize
-        y = x.groupby(by).idxmin()
+        y = x.groupby(by).idxmin()[objective]
 
-    for i,h in enumerate(hyperparameters):
-        kwargs = {h: [x[len(by)+i] for x in y[objective]]}
-        y = y.assign(**kwargs)
-
-    z = y.drop(objective, 1)
+    z = x.loc[y].set_index(by)
     return z
 
 if __name__ == "__main__":
