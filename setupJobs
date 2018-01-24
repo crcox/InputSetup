@@ -33,6 +33,7 @@ p.add_argument('-m','--write_master',action='store_true')
 p.add_argument('-d','--dag_setup',type=str,default='',help="Provide config file for submit and dag files.")
 p.add_argument('-o','--offset_index',type=int,nargs=1,default=0,help='Number of the first directory to affect/create. Intended to help add jobs to an existing set.')
 p.add_argument('-r','--root_dir',type=str,nargs=1,default='.',help='Directory in which job directories will be constructed.')
+p.add_argument('-p','--posixpaths',action='store_true',help='Directory in which job directories will be constructed.')
 
 args = p.parse_args()
 
@@ -43,6 +44,14 @@ ROOTDIR = args.root_dir
 
 FLAG_LOCALDATA = args.local_data
 FLAG_WRITEMASTER = args.write_master
+FLAG_POSIXPATHS = args.posixpaths
+if FLAG_POSIXPATHS:
+    import posixpath
+    pathjoin = posixpath.join
+    normpath = posixpath.normpath
+else:
+    pathjoin = os.path.join
+    normpath = os.path.normpath
 
 if SUBMITYAML:
     FLAG_SETUPDAG = True
@@ -75,6 +84,7 @@ except KeyError:
 sharedir = os.path.join(ROOTDIR,'shared')
 if not os.path.isdir(sharedir):
     os.makedirs(sharedir)
+sharedir = pathjoin(ROOTDIR,'shared')
 
 #############################################################
 #                HYPERBAND initialization                   #
@@ -120,18 +130,20 @@ for field in COPY_shared:
         for iSource,source in enumerate(SourceList):
             target = os.path.join(sharedir,os.path.basename(source))
             shutil.copyfile(source, target)
+            target = pathjoin(sharedir,os.path.basename(source))
             if FLAG_LOCALDATA:
                 stub[field][iSource] = os.path.basename(target)
             else:
-                stub[field][iSource] = os.path.normpath(os.path.join('..',sharedir,os.path.basename(target)))
+                stub[field][iSource] = normpath(pathjoin('..',sharedir,os.path.basename(target)))
     else:
         source = stub[field]
         target = os.path.join(sharedir,os.path.basename(source))
         shutil.copyfile(source, target)
+        target = pathjoin(sharedir,os.path.basename(source))
         if FLAG_LOCALDATA:
             stub[field] = os.path.basename(target)
         else:
-            stub[field] = os.path.normpath(os.path.join('..',sharedir,os.path.basename(target)))
+            stub[field] = normpath(pathjoin('..',sharedir,os.path.basename(target)))
 
 ###############################################################
 # Log files that all jobs will pull from SQUID in URLS_SHARED #
@@ -156,7 +168,7 @@ with open(URLS,'w') as f:
                 if FLAG_LOCALDATA:
                     stub[field][iSource] = os.path.basename(source)
                 else:
-                    stub[field][iSource] = os.path.normpath(os.path.join('..',sharedir,os.path.basename(source)))
+                    stub[field][iSource] = normpath(pathjoin('..',sharedir,os.path.basename(source)))
         else:
             source = stub[field]
             source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
@@ -164,7 +176,7 @@ with open(URLS,'w') as f:
             if FLAG_LOCALDATA:
                 stub[field] = os.path.basename(source)
             else:
-                stub[field] = os.path.normpath(os.path.join('..',sharedir,os.path.basename(source)))
+                stub[field] = normpath(pathjoin('..',sharedir,os.path.basename(source)))
 
 if StubAsMaster:
     master = stub
@@ -209,18 +221,20 @@ for iJob,config in zip(JobDirs,master):
             for iSource,source in enumerate(SourceList):
                 target = os.path.join(iJob,os.path.basename(source))
                 shutil.copyfile(source, target)
+                target = pathjoin(iJob,os.path.basename(source))
                 if FLAG_LOCALDATA:
                     config[field][iSource] = os.path.basename(target)
                 else:
-                    config[field][iSource] = os.path.normpath(target)
+                    config[field][iSource] = normpath(target)
         else:
             source = config[field]
             target = os.path.join(iJob,os.path.basename(source))
             shutil.copyfile(source, target)
+            target = pathjoin(iJob,os.path.basename(source))
             if FLAG_LOCALDATA:
                 config[field] = os.path.basename(target)
             else:
-                config[field] = os.path.normpath(target)
+                config[field] = normpath(target)
 
     #############################################################
     #                    Write URLS files                       #
@@ -236,7 +250,7 @@ for iJob,config in zip(JobDirs,master):
                     if FLAG_LOCALDATA:
                         config[field][iSource] = os.path.basename(source)
                     else:
-                        config[field][iSource] = os.path.normpath(source)
+                        config[field][iSource] = normpath(source)
             else:
                 source = config[field]
                 source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
@@ -244,7 +258,7 @@ for iJob,config in zip(JobDirs,master):
                 if FLAG_LOCALDATA:
                     config[field] = os.path.basename(source)
                 else:
-                    config[field] = os.path.normpath(source)
+                    config[field] = normpath(source)
 
     #############################################################
     #          Setup DAG and SUBMIT files for condor            #
