@@ -12,6 +12,7 @@ grep "Memory (MB)" $LOGFILES|\
   tr -d ':' |\
   sed 's/[\t ]\+/,/g'|\
   awk -f $MEMAWK
+echo ""
 grep "Disk (KB)" $LOGFILES|\
   tr -d ':' |\
   sed 's/[\t ]\+/,/g'|\
