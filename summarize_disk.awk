@@ -7,7 +7,7 @@ function human(x) {
     {x/=1024; s=substr(s,2)}
   return sprintf("%.2f %sB", x, substr(s,1,1))
 }
-{$4=$4*1000}
+{$4=$4*(2^10)} # KB to bytes
 BEGIN{
   FS=",";
   MIN=9999999;
@@ -15,13 +15,13 @@ BEGIN{
   SUM=0;
 }
 {
-  SUM=SUM+($4);
+  SUM=SUM+$4;
   if ($4>MAX) MAX=$4;
   if ($4<MIN) MIN=$4;
 }
 END{
-  print "Disk summary (in KB)"
-  print "--------------------"
+  print "Disk summary"
+  print "------------"
   print "min:",human(MIN);
   print "max:",human(MAX);
   print "mean:",human(SUM/NR)

@@ -1,5 +1,13 @@
 #!/bin/awk
 
+function human(x) {
+  if (x<1000) {return x} else {x/=1024}
+  s="kMGTEPYZ";
+  while (x>=1000 && length(s)>1)
+    {x/=1024; s=substr(s,2)}
+  return sprintf("%.2f %sB", x, substr(s,1,1))
+}
+{$4=$4*(2^20)} # MB to bytes
 BEGIN{
   FS=",";
   MIN=9999999;
@@ -12,9 +20,9 @@ BEGIN{
   if ($4<MIN) MIN=$4;
 }
 END{
-  print "Memory summary (in MB)"
-  print "----------------------"
-  print "min:",MIN;
-  print "max:",MAX;
-  print "mean:",SUM/NR
+  print "Memory summary"
+  print "--------------"
+  print "min:",human(MIN);
+  print "max:",human(MAX);
+  print "mean:",human(SUM/NR)
 }
