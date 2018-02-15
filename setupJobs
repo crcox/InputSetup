@@ -244,7 +244,7 @@ for iJob,config in zip(JobDirs,master):
         for field in URLS_uniq:
             if isinstance(config[field], list):
                 SourceList = config[field]
-                for source in SourceList:
+                for iSource,source in enumerate(SourceList):
                     source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
                     f.write(source_stripped +'\n')
                     if FLAG_LOCALDATA:
