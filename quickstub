@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 from io import open
 import argparse
 import os
+import os.path
 import sys
 import pandas
 import pkg_resources
@@ -26,6 +27,7 @@ p.add_argument('-H','--hyperband',action='store_true',help="Tweak some parameter
 p.add_argument('-m','--metadata',type=str,help="Path to metadata file.")
 p.add_argument('-d','--data',type=str,nargs='+',help='List of paths to include in the data list.')
 p.add_argument('-r','--random_permutations',type=int,nargs='+',default=[0],help="If greater than zero, generate a template for doing r random permutations. If two arguments are provided, the second specifies how many batches the permutations shuold be split in to.")
+p.add_argument('-R','--permutation_index',type=str,help="Permutation index.")
 p.add_argument('-k','--kfolds',type=int,default=10,help='Set up k-fold cv for a particular k.')
 p.add_argument('-t','--tuning-error',type=str,nargs='+',default=[],help="Provide path to one or more csv files containing error for multiple hyperparameter configurations. The stub will incorporate the 'best' parameters.")
 p.add_argument('-s','--tuning-stub',type=str,default='',help="Provide path to the stub.yaml file that was used to specify a round of tuning. This can be used in conjunction with --tuning-error to generate a final/stub.yaml.")
@@ -51,13 +53,20 @@ if args.tuning_error:
         else:
             X['metadata'] = tuningstub['metadata']
 
+        if args.permutation_index:
+            print('hi')
+            X['PermutationIndex'] = args.permutation_index
+
+        X['regularization'] = tuningstub['regularization']
         X['bias'] = tuningstub['bias']
-        X['normalize'] = tuningstub['normalize']
+        X['normalize_target'] = tuningstub['normalize_target']
+        X['normalize_data'] = tuningstub['normalize_data']
+        X['normalizewrt'] = tuningstub['normalizewrt']
         X['data_var'] = tuningstub['data_var']
         X['metadata_var'] = tuningstub['metadata_var']
         X['filters'] = tuningstub['filters']
         X['cvscheme'] = tuningstub['cvscheme']
-        X['target'] = tuningstub['target']
+        X['target_label'] = tuningstub['target_label']
         X['target_type'] = tuningstub['target_type']
         X['sim_source'] = tuningstub['sim_source']
         X['sim_metric'] = tuningstub['sim_metric']
@@ -65,6 +74,9 @@ if args.tuning_error:
         X['subject_id_fmt'] = tuningstub['subject_id_fmt']
         X['executable'] = tuningstub['executable']
         X['wrapper'] = tuningstub['wrapper']
+
+        if not args.data:
+            args.data = tuningstub['data']
 
     df = pandas.concat([pandas.read_csv(f) for f in args.tuning_error])
 
@@ -77,7 +89,32 @@ if args.tuning_error:
     for i,x in enumerate(args.by):
         if len(args.by) > 1:
             levels = z.index.levels[i]
-            if x == 'subject' and args.data:
+            if x == 'subject' and ('WindowStart' in args.by) and 'WindowSize' in args.by and 'BoxCar' in args.by and args.data:
+                st = args.by.index('WindowStart')
+                si = args.by.index('WindowSize')
+                bc = args.by.index('BoxCar')
+                for j in range(z.shape[0]):
+                    pattern = "BoxCar/{BoxCar:03d}/WindowStart/{WindowStart:04d}/WindowSize/{WindowSize:04d}/s{filename:02d}_raw.mat".format(
+                        BoxCar=z.index.levels[bc][z.index.labels[bc][j]],
+                        WindowStart=z.index.levels[st][z.index.labels[st][j]],
+                        WindowSize=z.index.levels[si][z.index.labels[si][j]],
+                        filename=z.index.levels[i][z.index.labels[i][j]]
+                    )
+                    datamatch = [d for d in args.data if pattern in d]
+                    if len(datamatch) > 1:
+                        raise ValueError('Programming error? Pattern matched within multiple data strings.')
+                    else:
+                        try:
+                            X[x].append(datamatch[0])
+                            X['metadata'].append(os.path.split(datamatch[0])[0]+'/metadata_raw.mat')
+
+                        except KeyError:
+                            X[x] = []
+                            X['metadata'] = []
+                            X[x].append(datamatch[0])
+                            X['metadata'].append(os.path.split(datamatch[0])[0]+'/metadata_raw.mat')
+
+            elif x == 'subject' and args.data:
                 X[x] = [args.data[j] for j in z.index.labels[i]]
             elif x == 'subject' and tuningstub:
                 if isinstance(tuningstub['data'], list):
