@@ -1,11 +1,14 @@
 <%
     import os,re,yaml
-    HOME = os.path.expanduser('~')
+    #HOME = os.path.expanduser('~')
+    HOME = 'C:\\Users\\mbmhscc4'
     if method in ['lasso','iterlasso','soslasso','searchlight']:
         suffix='MVPA'
     elif method in ['searchlightrsa','nrsa']:
         suffix='RSA'
 
+%>
+<%
     X = {
         'data': ['/path/to/data/s101.mat','/path/to/data/s102.mat'],
         'data_var': 'X',
@@ -53,7 +56,8 @@
     X['COPY'].append('wrapper')
     X['URLS'].append('data')
     X['URLS'].append('metadata')
-
+%>
+<%
     for key,v in override.items():
         X[key] = v
 
@@ -65,15 +69,19 @@
     if metadata:
         X['metadata'] = metadata
 
-    # if not 'subject_id_fmt' in X:
-    # Temporarily giving this supreme precedence
-    X['subject_id_fmt'] = re.sub('[0-9]+','%d',os.path.basename(X['data'][0]))
-
+    if not 'subject_id_fmt' in X:
+        # Temporarily giving this supreme precedence
+        X['subject_id_fmt'] = re.sub('[0-9]+','%d',os.path.basename(X['data'][0]))
+%>
+<%
     try:
         del X['subject']
     except KeyError:
         pass
 
+%>
+<%
+    print(X['PermutationIndex'])
     if (r[0] > 0 or ('RandomSeed' in X)) and not 'PermutationIndex' in X:
         if method == 'nrsa':
             X['PermutationIndex'] = os.path.dirname(X['metadata'])+'/PERMUTATION_INDEX.mat'
@@ -81,7 +89,8 @@
             X['PermutationIndex'] = os.path.dirname(X['metadata'])+'/PERMUTATION_STRUCT.mat'
 
         X['URLS'].append('PermutationIndex')
-
+%>
+<%
     def prefab(x):
         if isinstance(x,list):
             if len(x)>1 or len(x) == 0:
@@ -228,7 +237,7 @@ slpermutations: 0
 % elif method=="nrsa":
 # Network RSA
 # ===========
-regularization: L1L2
+regularization: ${prefab(X['regularization'])}
 
 # Parameters
 # ----------
@@ -251,15 +260,17 @@ bias: ${prefab(X['bias'])}
 normalize: ${prefab(X['normalize'])}
 % if hyperband:
 lambda: ${yaml.dump(X['lambda'], default_flow_style=True)[0:-1]}
-# Uncomment if using GrOWL
-# LambdaSeq: ${prefab(X['LambdaSeq'])}
-# lambda1: {'distribution': 'uniform', 'args': [1, 16]}
+% if prefab(X['regularization']).lower() in ['growl','growl2']:
+lambda1: ${yaml.dump(X['lambda1'], default_flow_style=True)[0:-1]}
+LambdaSeq: ${prefab(X['LambdaSeq'])}
+% endif
 HYPERBAND: ${yaml.dump(X['HYPERBAND'], default_flow_style=True)[0:-1]}
 % else:
 lambda: ${prefab(X['lambda'])}
-# Uncomment if using GrOWL
-# LambdaSeq: ${prefab(X['LambdaSeq'])}
-# lambda1: ${prefab(X['lambda1'])}
+% if prefab(X['regularization']).lower() in ['growl','growl2']:
+lambda1: ${prefab(X['lambda1'])}
+LambdaSeq: ${prefab(X['LambdaSeq'])}
+% endif
 % endif
 % endif
 
