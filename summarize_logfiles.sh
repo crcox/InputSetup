@@ -1,6 +1,7 @@
 #!/bin/bash
 TIMEAWK=$(which summarize_time.awk)
 MEMAWK=$(which summarize_memory.awk)
+DISKAWK=$(which summarize_disk.awk)
 LOGFILES=$(find ./ -maxdepth 2 -type f -name "process.log")
 
 grep "Total Remote Usage" $LOGFILES|\
@@ -11,3 +12,7 @@ grep "Memory (MB)" $LOGFILES|\
   tr -d ':' |\
   sed 's/[\t ]\+/,/g'|\
   awk -f $MEMAWK
+grep "Disk (KB)" $LOGFILES|\
+  tr -d ':' |\
+  sed 's/[\t ]\+/,/g'|\
+  awk -f $DISKAWK
