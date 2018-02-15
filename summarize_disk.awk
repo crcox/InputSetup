@@ -5,7 +5,7 @@ function human(x) {
   s="kMGTEPYZ";
   while (x>=1000 && length(s)>1)
     {x/=1024; s=substr(s,2)}
-  return int(x+0.5) substr(s,1,1)
+  return sprintf("%.2f %sB", x, substr(s,1,1))
 }
 {$4=$4*1000}
 BEGIN{
