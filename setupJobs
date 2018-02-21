@@ -106,9 +106,13 @@ if 'HYPERBAND' in stub:
     stub['EXPAND'].append(['BRACKETS'] + hyperparams)
 
     print("Writing stub_hb.yaml...")
+    stub['SearchWithHyperband'] = True
     with open('stub_hb.yaml', 'w') as f:
-        yaml.dump(dict((k,v) for k,v in stub.items()), f)
+        yaml.dump(dict((k,v) for k,v in stub.items() if k!='HYPERBAND'), f)
         #yaml.dump({k:v for k,v in stub.items() if k!='HYPERBAND'}, f)
+
+else:
+    stub['SearchWithHyperband'] = False
 
 #############################################################
 #         Copy files to be shared into ./shared             #
