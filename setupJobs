@@ -112,7 +112,8 @@ if 'HYPERBAND' in stub:
         #yaml.dump({k:v for k,v in stub.items() if k!='HYPERBAND'}, f)
 
 else:
-    stub['SearchWithHyperband'] = False
+    if not 'SearchWithHyperband' in stub:
+        stub['SearchWithHyperband'] = False
 
 #############################################################
 #         Copy files to be shared into ./shared             #
