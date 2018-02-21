@@ -107,7 +107,7 @@ if 'HYPERBAND' in stub:
 
     print("Writing stub_hb.yaml...")
     with open('stub_hb.yaml', 'w') as f:
-        yaml.dump(dict((k,v) for k,v in stub.items() if k!='HYPERBAND'), f)
+        yaml.dump(dict((k,v) for k,v in stub.items()), f)
         #yaml.dump({k:v for k,v in stub.items() if k!='HYPERBAND'}, f)
 
 #############################################################
