@@ -26,7 +26,9 @@
         'shape': 'sphere',
         'diameter': 18,
         'overlap': 9,
-        'normalize': 'zscore',
+        'normalize_data': 'zscore',
+        'normalize_target': 'centered',
+        'normalize_wrt': 'training_set',
         'subject': [],
         'finalholdout': [],
         'orientation': 'orig',
@@ -44,10 +46,10 @@
         pass
 
     if method in ['soslasso', 'iterlasso', 'lasso', 'searchlight']:
-        X['target'] = 'faces'
+      X['target_label'] = 'faces'
         X['target_type'] = 'category'
     elif method in ['searchlightrsa','nrsa']:
-        X['target'] = "semantic"
+        X['target_target'] = "semantic"
         X['target_type'] = "similarity"
         X['sim_source'] = "featurenorms"
         X['sim_metric'] = "cosine"
@@ -81,7 +83,6 @@
 
 %>
 <%
-    print(X['PermutationIndex'])
     if (r[0] > 0 or ('RandomSeed' in X)) and not 'PermutationIndex' in X:
         if method == 'nrsa':
             X['PermutationIndex'] = os.path.dirname(X['metadata'])+'/PERMUTATION_INDEX.mat'
@@ -135,15 +136,18 @@ regularization: soslasso
 alpha: ${yaml.dump(X['alpha'], default_flow_style=True)[0:-1]}
 lambda: ${yaml.dump(X['lambda'], default_flow_style=True)[0:-1]}
 HYPERBAND: ${yaml.dump(X['HYPERBAND'], default_flow_style=True)[0:-1]}
+SearchWithHyperband: true
 % else:
 alpha: ${prefab(X['alpha'])}
 lambda: ${prefab(X['lambda'])}
+SearchWithHyperband: false
 % endif
 bias: ${prefab(X['bias'])}
 shape: ${prefab(X['shape'])}
 diameter: ${prefab(X['diameter'])}
 overlap: ${prefab(X['overlap'])}
-normalize: ${prefab(X['normalize'])}
+normalize_data: ${prefab(X['normalize_data'])}
+normalize_wrt: ${prefab(X['normalize_wrt'])}
 % elif method=="lasso":
 # LASSO
 # =====
@@ -170,7 +174,8 @@ regularization: lasso_glmnet
 % endif
 bias: ${prefab(X['bias'])}
 lambda: ${prefab(X['lambda'])}
-normalize: ${prefab(X['normalize'])}
+normalize_data: ${prefab(X['normalize_data'])}
+normalize_wrt: ${prefab(X['normalize_wrt'])}
 % elif method=="iterlasso":
 # ITERATIVE LASSO
 # ===============
@@ -197,7 +202,8 @@ regularization: iterlasso_glmnet
 % endif
 bias: ${prefab(X['bias'])}
 lambda: ${prefab(X['lambda'])}
-normalize: ${prefab(X['normalize'])}
+normalize_data: ${prefab(X['normalize_data'])}
+normalize_wrt: ${prefab(X['normalize_wrt'])}
 % elif method=="searchlight":
 # SEARCHLIGHT
 # ===========
@@ -257,7 +263,9 @@ regularization: ${prefab(X['regularization'])}
 # 2-norm (which is the euclidean distance between each voxel and the origin).
 % endif
 bias: ${prefab(X['bias'])}
-normalize: ${prefab(X['normalize'])}
+normalize_data: ${prefab(X['normalize_data'])}
+normalize_target: ${prefab(X['normalize_target'])}
+normalize_wrt: ${prefab(X['normalize_wrt'])}
 % if hyperband:
 lambda: ${yaml.dump(X['lambda'], default_flow_style=True)[0:-1]}
 % if prefab(X['regularization']).lower() in ['growl','growl2']:
@@ -359,7 +367,7 @@ finalholdout: 0
 # Smaller values of tau are associated with higher-dimensional embeddings to
 # model. It is a threshold for the reconstruction error.
 % endif
-target: ${X['target']}
+target_label: ${X['target']}
 target_type: ${X['target_type']}
 % if method in ['searchlightrsa','nrsa']:
 sim_source: ${X['sim_source']}
@@ -445,12 +453,14 @@ RandomSeed: [${','.join(str(i) for i in range(1,r[0]+1))}]
 PermutationTest: True
 PermutationMethod: 'manual'
 PermutationIndex: ${X['PermutationIndex']}
+perm_varname = ${X['perm_varname']}
 RestrictPermutationByCV: false
 % elif 'RandomSeed' in X and X['RandomSeed']:
 RandomSeed: ${X['RandomSeed']}
 PermutationTest: True
 PermutationMethod: 'manual'
 PermutationIndex: ${X['PermutationIndex']}
+perm_varname = ${X['perm_varname']}
 RestrictPermutationByCV: false
 % endif
 

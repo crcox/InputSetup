@@ -27,7 +27,7 @@ p.add_argument('-H','--hyperband',action='store_true',help="Tweak some parameter
 p.add_argument('-m','--metadata',type=str,help="Path to metadata file.")
 p.add_argument('-d','--data',type=str,nargs='+',help='List of paths to include in the data list.')
 p.add_argument('-r','--random_permutations',type=int,nargs='+',default=[0],help="If greater than zero, generate a template for doing r random permutations. If two arguments are provided, the second specifies how many batches the permutations shuold be split in to.")
-p.add_argument('-R','--permutation_index',type=str,help="Permutation index.")
+p.add_argument('-R','--permutation_index',type=str,nargs=2,help="Permutation index.")
 p.add_argument('-k','--kfolds',type=int,default=10,help='Set up k-fold cv for a particular k.')
 p.add_argument('-t','--tuning-error',type=str,nargs='+',default=[],help="Provide path to one or more csv files containing error for multiple hyperparameter configurations. The stub will incorporate the 'best' parameters.")
 p.add_argument('-s','--tuning-stub',type=str,default='',help="Provide path to the stub.yaml file that was used to specify a round of tuning. This can be used in conjunction with --tuning-error to generate a final/stub.yaml.")
@@ -54,14 +54,17 @@ if args.tuning_error:
             X['metadata'] = tuningstub['metadata']
 
         if args.permutation_index:
-            print('hi')
-            X['PermutationIndex'] = args.permutation_index
+            X['PermutationIndex'] = args.permutation_index[0]
+            X['perm_varname'] = args.permutation_index[1]
 
         X['regularization'] = tuningstub['regularization']
         X['bias'] = tuningstub['bias']
         X['normalize_target'] = tuningstub['normalize_target']
         X['normalize_data'] = tuningstub['normalize_data']
-        X['normalizewrt'] = tuningstub['normalizewrt']
+        try:
+            X['normalize_wrt'] = tuningstub['normalize_wrt']
+        except KeyError:
+            X['normalize_wrt'] = tuningstub['normalizewrt']
         X['data_var'] = tuningstub['data_var']
         X['metadata_var'] = tuningstub['metadata_var']
         X['filters'] = tuningstub['filters']
