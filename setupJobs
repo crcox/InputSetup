@@ -222,6 +222,7 @@ for iJob,config in zip(JobDirs,master):
     #############################################################
     for field in COPY_uniq:
         if isinstance(config[field], list):
+            config[field] = list(config[field])
             SourceList = config[field]
             for iSource,source in enumerate(SourceList):
                 target = os.path.join(iJob,os.path.basename(source))
@@ -248,6 +249,7 @@ for iJob,config in zip(JobDirs,master):
     with open(URLS,'w') as f:
         for field in URLS_uniq:
             if isinstance(config[field], list):
+                config[field] = list(config[field])
                 SourceList = config[field]
                 for iSource,source in enumerate(SourceList):
                     source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
