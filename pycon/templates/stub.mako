@@ -46,7 +46,7 @@
         pass
 
     if method in ['soslasso', 'iterlasso', 'lasso', 'searchlight']:
-      X['target_label'] = 'faces'
+        X['target_label'] = 'faces'
         X['target_type'] = 'category'
     elif method in ['searchlightrsa','nrsa']:
         X['target_target'] = "semantic"
@@ -367,7 +367,7 @@ finalholdout: 0
 # Smaller values of tau are associated with higher-dimensional embeddings to
 # model. It is a threshold for the reconstruction error.
 % endif
-target_label: ${X['target']}
+target_label: ${X['target_label']}
 target_type: ${X['target_type']}
 % if method in ['searchlightrsa','nrsa']:
 sim_source: ${X['sim_source']}
