@@ -11,11 +11,11 @@ def read(fname):
 setup(
     name = "condortools",
     version = "0.0.1",
-    author = "Chris Cox",
-    author_email = "cox.crc@gmail.com",
-    description = ("Collection of simple tools useful for working with HTCondor."),
+    author = "Christopher R. Cox",
+    author_email = "chriscox@lsu.edu",
+    description = ("Collection of tools for setting up many HTCondor jobs."),
     license = "MIT",
-    keywords = "HTCondor UW-Madison",
+    keywords = "HTCondor UW-Madison WISC LSU",
     url = "http://packages.python.org/condortools",
     packages=['pycon'],
     package_data={'pycon':['templates/*']},
@@ -29,5 +29,5 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
-    ],
+    ]
 )
