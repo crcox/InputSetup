@@ -5,6 +5,11 @@
   else:
     isOSG=False
 
+  if 'ProxyURL' in ProcessInfo and ProcessInfo['ProxyURL']:
+    ProxyURL=ProcessInfo['ProxyURL']
+  else:
+    ProxyURL=False
+
   if 'ProjectName' in ProcessInfo and ProcessInfo['ProjectName']:
     PROJECT=ProcessInfo['ProjectName']
   else:
@@ -140,7 +145,7 @@ log = process.log
 # Arguments to the wrapper script.  Of note is the last one, --, anything
 # after this goes direct to your R, Matlab or Other code.
 # This gets augmented for you by mkdag.pl. Choose R or Matlab
-arguments = "${EXECUTABLE} ${UNIQUE} -- ${join_with_spaces(execPArgs)|trim} ${join_with_spaces(execKVArgs)|trim}"
+arguments = "${EXECUTABLE} ${UNIQUE} ${ProxyURL} ${isOSG} -- ${join_with_spaces(execPArgs)|trim} ${join_with_spaces(execKVArgs)|trim}"
 
 # Release a job from being on hold hold after half an hour (1800 seconds), up to 4 times,
 # as long as the executable could be started, the input files and initial directory
