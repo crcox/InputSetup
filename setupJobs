@@ -124,7 +124,7 @@ else:
 # for the file in the job's current directory. This is for jobs
 # that run on HTCondor, since all files are transfered into the
 # job directory (directories themselves are not transfered).
-if 'COPY' in stub:
+if 'COPY' in stub and not stub['COPY'] is None:
     COPY_shared = [field for field in stub['COPY'] if field not in EXPAND]
 else:
     COPY_shared = []
@@ -200,7 +200,7 @@ njobs = len(master)
 print("Composing {njobs:d} individual jobs...".format(njobs=njobs))
 width = pycon.utils.ndigits(njobs-1)
 JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in range(njobs)]
-if 'COPY' in stub:
+if 'COPY' in stub and not stub['COPY'] is None:
     COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
 else:
     COPY_uniq = []
@@ -271,11 +271,6 @@ for iJob,config in zip(JobDirs,master):
     #          Setup DAG and SUBMIT files for condor            #
     #############################################################
     if FLAG_SETUPDAG:
-    #    dag_text = dag_template.render(UNIQUE=iJob[2:],JOBDIR='./',SUBMITFILE=os.path.abspath(os.path.join(iJob,'process.sub')),PRESCRIPT=ProcessInfo['PRESCRIPT'],POSTSCRIPT=ProcessInfo['POSTSCRIPT'])
-    #    dag_filename = os.path.join(iJob,"{j:s}.dag".format(j=iJob))
-    #    with open(dag_filename,'w') as f:
-    #        f.write(dag_text.strip())
-
         submit_text = submit_template.render(ProcessInfo=ProcessInfo,UNIQUE=iJob[2:],JOBDIR=iJob)
         submit_filename = os.path.join(iJob,"process.sub")
         with open(submit_filename,'w') as f:

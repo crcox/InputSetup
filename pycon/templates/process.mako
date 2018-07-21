@@ -1,62 +1,86 @@
 <%page args="ProcessInfo,UNIQUE,JOBDIR"/>
 <%
-  if ProcessInfo['FLOCK']:
+  if 'OSGConnect' in ProcessInfo and ProcessInfo['OSGConnect']:
+    isOSG=ProcessInfo['OSGConnect']
+  else:
+    isOSG=False
+
+  if 'ProjectName' in ProcessInfo and ProcessInfo['ProjectName']:
+    PROJECT=ProcessInfo['ProjectName']
+  else:
+    PROJECT=False
+
+  if 'AccountingGroup' in ProcessInfo and ProcessInfo['AccountingGroup']:
+    AccountingGroup=ProcessInfo['AccountingGroup']
+  else:
+    AccountingGroup=False
+
+  if 'FLOCK' in ProcessInfo and ProcessInfo['FLOCK']:
     FLOCK=ProcessInfo['FLOCK']
   else:
     FLOCK=False
 
-  if ProcessInfo['GLIDE']:
+  if 'GLIDE' in ProcessInfo and ProcessInfo['GLIDE']:
     GLIDE=ProcessInfo['GLIDE']
   else:
     GLIDE=False
 
-  if ProcessInfo['SHAREDIR']:
+  if 'SHAREDIR' in ProcessInfo and ProcessInfo['SHAREDIR']:
     SHAREDIR=ProcessInfo['SHAREDIR']
   else:
     SHAREDIR='../shared'
 
-  if ProcessInfo['WRAPPER']:
+  if 'WRAPPER' in ProcessInfo and ProcessInfo['WRAPPER']:
     WRAPPER=ProcessInfo['WRAPPER']
   else:
     WRAPPER=''
 
-  if ProcessInfo['EXECUTABLE']:
+  if 'EXECUTABLE' in ProcessInfo and ProcessInfo['EXECUTABLE']:
     EXECUTABLE=ProcessInfo['EXECUTABLE']
   else:
     EXECUTABLE=''
 
-  if ProcessInfo['PRESCRIPT']:
+  if 'PRESCRIPT' in ProcessInfo and ProcessInfo['PRESCRIPT']:
     PRESCRIPT=ProcessInfo['PRESCRIPT']
   else:
     PRESCRIPT=''
 
-  if ProcessInfo['POSTSCRIPT']:
+  if 'POSTSCRIPT' in ProcessInfo and ProcessInfo['POSTSCRIPT']:
     POSTSCRIPT=ProcessInfo['POSTSCRIPT']
   else:
     POSTSCRIPT=''
 
-  if ProcessInfo['request_memory']:
+  if 'request_memory' in ProcessInfo and ProcessInfo['request_memory']:
     request_memory=ProcessInfo['request_memory']
   else:
     request_memory='0KB'
 
-  if ProcessInfo['request_disk']:
+  if 'request_disk' in ProcessInfo and ProcessInfo['request_disk']:
     request_disk=ProcessInfo['request_disk']
   else:
     request_disk='0KB'
 
-  if ProcessInfo['execPArgs']:
+  if 'execPArgs' in ProcessInfo and ProcessInfo['execPArgs']:
     execPArgs=ProcessInfo['execPArgs']
   else:
     execPArgs=[]
 
-  if ProcessInfo['execKVArgs']:
+  if 'execKVArgs' in ProcessInfo and ProcessInfo['execKVArgs']:
     execKVArgs=ProcessInfo['execKVArgs']
   else:
     execKVArgs=[]
 %>
 # MAKE SURE TO CHANGE THE FIRST SECTION BELOW FOR EACH NEW SUBMISSION!!!
+% if 'ProjectName' in ProcessInfo and not ProcessInfo['ProjectName'] is None:
++ProjectName = ${PROJECT}
 #
+% endif
+% if 'AccountingGroup' in ProcessInfo and not ProcessInfo['AccountingGroup'] is None:
++AccountingGroup = ${AccountingGroup}
+#
+% endif
+
+% if 'FLOCK' in ProcessInfo and not ProcessInfo['FLOCK'] is None:
 # By default, your job will be submitted to the CHTC's HTCondor
 # Pool only, which is good for jobs that are each less than 24 hours.
 #
@@ -64,11 +88,14 @@
 # other HTCondor pools on campus.
 +WantFlocking = ${FLOCK}
 #
+% endif
+% if 'GLIDE' in ProcessInfo and not ProcessInfo['GLIDE'] is None:
 # If your jobs are less than ~2 hours long, "glide" them to the national
 # Open Science Grid (OSG) for access to even more computers and the
 # fastest overall throughput.
 +WantGlidein = ${GLIDE}
 #
+% endif
 # Tell Condor how many CPUs (cores), how much memory (MB) and how much
 # disk space (KB) each job will need:
 request_cpus = 1
@@ -95,7 +122,12 @@ universe = vanilla
 
 # This wrapper script automates setting R or Matlab up.
 executable = ${WRAPPER}
-requirements = (OpSysMajorVer =?= 6)
+% if isOSG:
+<%text>requirements = OSGVO_OS_STRING == "RHEL 6" && Arch == "X86_64" && HAS_MODULES == True</%text>
+% else:
+<%text>requirements = (OpSysMajorVer =?= 6)</%text>
+% endif
+
 
 # If anything is output to standard output or standard error,
 # where should it be saved?
@@ -105,14 +137,10 @@ error = process.err
 # Where to write a log of your jobs statuses.
 log = process.log
 
-# Tell us the versien of R or Matlab you are using. Place it
-# in the JobAd. Choose one. Or comment both if it is some other
-# kind of program.
-<%text>#+${TYPE}="${VERSION}"</%text>
 # Arguments to the wrapper script.  Of note is the last one, --, anything
 # after this goes direct to your R, Matlab or Other code.
 # This gets augmented for you by mkdag.pl. Choose R or Matlab
-arguments = ${EXECUTABLE} ${UNIQUE} -- ${join_with_spaces(execPArgs)|trim} ${join_with_spaces(execKVArgs)|trim}
+arguments = "${EXECUTABLE} ${UNIQUE} -- ${join_with_spaces(execPArgs)|trim} ${join_with_spaces(execKVArgs)|trim}"
 
 # Release a job from being on hold hold after half an hour (1800 seconds), up to 4 times,
 # as long as the executable could be started, the input files and initial directory
@@ -128,13 +156,8 @@ notification = never
 # This line is completed for you
 transfer_input_files = ./, ${SHAREDIR}/
 
-# Leave the below line commented, unless you have a specific need for
-# indicating a group that is not your default.
-# See: http://monitor.chtc.wisc.edu/uw_condor_usage/usage1.shtml
-#+AccountingGroup = "CHTC"
-
-
 queue
+
 <%def name="join_with_spaces(args)" filter="trim">
   <%
     line = []
