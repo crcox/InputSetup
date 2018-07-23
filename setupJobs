@@ -216,7 +216,7 @@ with open('./queue_input.csv','w') as f:
             if isinstance(config[field], list):
                 config[field] = list(config[field])
                 SourceList = config[field]
-                ForQueue.append(','.join(SourceList))
+                ForQueue.append('"' + '","'.join(SourceList) + '"')
                 for iSource,source in enumerate(SourceList):
                     if FLAG_LOCALDATA:
                         config[field][iSource] = os.path.basename(source)
@@ -233,7 +233,7 @@ with open('./queue_input.csv','w') as f:
         if 'URLS' in config:
             del config['URLS']
 
-        f.write('"' + '","'.join([iJob] + ForQueue) + '"' +  '\n')
+        f.write(','.join([iJob] + ForQueue) +  '\n')
 
 
 if hasProgress:
