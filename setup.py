@@ -16,10 +16,8 @@ setup(
     description = ("Collection of tools for setting up many HTCondor jobs."),
     license = "MIT",
     keywords = "HTCondor UW-Madison WISC LSU",
-    url = "http://packages.python.org/condortools",
-    packages=['pycon'],
+    packages=['pycon','hyperband'],
     package_data={'pycon':['templates/*']},
-    py_modules=['hyperband'],
     scripts = ['setupJobs','quickstub'],
     long_description=read('README.md'),
     install_requires=[

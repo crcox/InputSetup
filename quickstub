@@ -8,7 +8,7 @@ import sys
 import pandas
 import pkg_resources
 import yaml
-from hyperband import pick_best_hyperparameters
+from hyperband.hyperband import pick_best_hyperparameters
 from mako.template import Template
 from mako import exceptions
 resource_package = 'pycon'

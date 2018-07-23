@@ -10,7 +10,7 @@ import yaml
 from mako.template import Template
 from pycon import pycon
 try:
-    from hyperband import hyperband, get_random_hyperparameter_configuration
+    from hyperband.hyperband import hyperband, get_random_hyperparameter_configuration
 except ImportError:
     pass
 try:
