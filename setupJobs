@@ -7,19 +7,24 @@ import pkg_resources
 import shutil
 import subprocess
 import yaml
-from mako.template import Template
+# from mako.template import Template
 from pycon import pycon
+
 try:
+    from numpy import argsort, ceil, log, random
+    import pandas
     from hyperband import hyperband, get_random_hyperparameter_configuration
 except ImportError:
     pass
+
 try:
     import progress.bar
+    hasProgress = True
 except ImportError:
+    hasProgress = False
     pass
+
 resource_package = 'pycon';
-#resource_path_dag = os.path.join('templates','subdag.mako')
-#dag_template_string = pkg_resources.resource_string(resource_package, resource_path_dag)
 resource_path_submit = os.path.join('templates','process.mako')
 submit_template_string = pkg_resources.resource_string(resource_package, resource_path_submit)
 
@@ -28,23 +33,19 @@ p = argparse.ArgumentParser()
 p.add_argument('stub')
 # Flags
 p.add_argument('-l','--local_data',action='store_true')
-p.add_argument('-m','--write_master',action='store_true')
+p.add_argument('-p','--posix_paths',action='store_true',help='Force the path-separater character to be / (rather than \ on Windows).')
 # Options
-p.add_argument('-d','--dag_setup',type=str,default='',help="Provide config file for submit and dag files.")
 p.add_argument('-o','--offset_index',type=int,nargs=1,default=0,help='Number of the first directory to affect/create. Intended to help add jobs to an existing set.')
 p.add_argument('-r','--root_dir',type=str,nargs=1,default='.',help='Directory in which job directories will be constructed.')
-p.add_argument('-p','--posixpaths',action='store_true',help='Directory in which job directories will be constructed.')
 
 args = p.parse_args()
 
 STUBYAML = args.stub
-SUBMITYAML = args.dag_setup
 OFFSET = args.offset_index
 ROOTDIR = args.root_dir
 
 FLAG_LOCALDATA = args.local_data
-FLAG_WRITEMASTER = args.write_master
-FLAG_POSIXPATHS = args.posixpaths
+FLAG_POSIXPATHS = args.posix_paths
 if FLAG_POSIXPATHS:
     import posixpath
     pathjoin = posixpath.join
@@ -52,22 +53,6 @@ if FLAG_POSIXPATHS:
 else:
     pathjoin = os.path.join
     normpath = os.path.normpath
-
-if SUBMITYAML:
-    FLAG_SETUPDAG = True
-    #dag_template = Template(dag_template_string)
-    submit_template = Template(submit_template_string)
-    with open(SUBMITYAML,'rb') as f:
-        ProcessInfo = yaml.load(f)
-
-    if not 'PRESCRIPT' in ProcessInfo:
-        ProcessInfo['PRESCRIPT'] = ''
-
-    if not 'POSTSCRIPT' in ProcessInfo:
-        ProcessInfo['POSTSCRIPT'] = ''
-
-else:
-    FLAG_SETUPDAG = False
 
 SPECIALFIELDS = ['EXPAND','URLS','COPY']
 StubAsMaster = False
@@ -150,53 +135,19 @@ for field in COPY_shared:
         else:
             stub[field] = normpath(pathjoin('..',sharedir,os.path.basename(target)))
 
-###############################################################
-# Log files that all jobs will pull from SQUID in URLS_SHARED #
-###############################################################
-# After logging, the file path will be updated so that the
-# executable will look for the file in the job's current
-# directory. HTCondor transfers all files into the job directory
-# and does not transfer directories, themselves.
-if 'URLS' in stub:
-    URLS_shared = [field for field in stub['URLS'] if field not in EXPAND]
-else:
-    URLS_shared = []
-
-URLS = os.path.join(sharedir,'URLS_SHARED')
-with open(URLS,'w') as f:
-    for field in URLS_shared:
-        if isinstance(stub[field],list):
-            SourceList = stub[field]
-            for iSource,source in enumerate(SourceList):
-                source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
-                f.write(source_stripped+'\n')
-                if FLAG_LOCALDATA:
-                    stub[field][iSource] = os.path.basename(source)
-                else:
-                    stub[field][iSource] = normpath(pathjoin('..',sharedir,os.path.basename(source)))
-        else:
-            source = stub[field]
-            source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
-            f.write(source_stripped+'\n')
-            if FLAG_LOCALDATA:
-                stub[field] = os.path.basename(source)
-            else:
-                stub[field] = normpath(pathjoin('..',sharedir,os.path.basename(source)))
-
 if StubAsMaster:
     master = stub
 else:
     master = pycon.expand_stub(stub)
 
-if FLAG_WRITEMASTER:
-    print("Writing master.yaml...")
-    with open('master.yaml', 'w') as f:
-        yaml.dump_all(master, f)
-
 #############################################################
 #              Setup individual jobs structure              #
 #############################################################
 njobs = len(master)
+
+if hasProgress:
+    bar = progress.bar.Bar('', max=njobs)
+
 print("Composing {njobs:d} individual jobs...".format(njobs=njobs))
 width = pycon.utils.ndigits(njobs-1)
 JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in range(njobs)]
@@ -210,10 +161,6 @@ if 'URLS' in stub:
 else:
     URLS_uniq = []
 
-try:
-    bar = progress.bar.Bar('', max=njobs)
-except NameError:
-    pass
 for iJob,config in zip(JobDirs,master):
     if not os.path.isdir(iJob):
         os.makedirs(iJob)
@@ -243,68 +190,54 @@ for iJob,config in zip(JobDirs,master):
                 config[field] = normpath(target)
 
     #############################################################
-    #                    Write URLS files                       #
-    #############################################################
-    URLS = os.path.join(iJob,'URLS')
-    with open(URLS,'w') as f:
-        for field in URLS_uniq:
-            if isinstance(config[field], list):
-                config[field] = list(config[field])
-                SourceList = config[field]
-                for iSource,source in enumerate(SourceList):
-                    source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
-                    f.write(source_stripped +'\n')
-                    if FLAG_LOCALDATA:
-                        config[field][iSource] = os.path.basename(source)
-                    else:
-                        config[field][iSource] = normpath(source)
-            else:
-                source = config[field]
-                source_stripped = pycon.utils.lstrip_pattern(source,'/squid')
-                f.write(source_stripped +'\n')
-                if FLAG_LOCALDATA:
-                    config[field] = os.path.basename(source)
-                else:
-                    config[field] = normpath(source)
-
-    #############################################################
-    #          Setup DAG and SUBMIT files for condor            #
-    #############################################################
-    if FLAG_SETUPDAG:
-        submit_text = submit_template.render(ProcessInfo=ProcessInfo,UNIQUE=iJob[2:],JOBDIR=iJob)
-        submit_filename = os.path.join(iJob,"process.sub")
-        with open(submit_filename,'w') as f:
-            f.write(submit_text.strip())
-
-    #############################################################
     #           Distribute params.json file to each job         #
     #############################################################
     paramfile = os.path.join(iJob,'params.json')
     if 'COPY' in config:
         del config['COPY']
 
-    if 'URLS' in config:
-        del config['URLS']
-
     with open(paramfile, 'w') as f:
         json.dump(config, f, sort_keys = True, indent = 4)
-    try:
+
+    if hasProgress:
         bar.next()
-    except NameError:
-        pass
 
-if FLAG_SETUPDAG:
-    with open('./sweep.dag','w') as f:
-        if os.path.isfile('./dagman.cfg'):
-            f.write('CONFIG ./dagman.cfg\n')
-        for iJob in JobDirs:
-            submit_basename = "process.sub"
-            f.write("JOB {j:s} {p:s} DIR {d:s}\n".format(j=iJob[2:],p=submit_basename,d=iJob))
+#############################################################
+#                  Write Queue Input File                   #
+#############################################################
+URLS = stub['URLS']
+with open('./queue_input.header','w') as f:
+    f.write(','.join(['jobdir']+URLS) + '\n')
 
-try:
+with open('./queue_input.csv','w') as f:
+    for iJob, config in zip(JobDirs,master):
+        ForQueue = []
+        for field in URLS:
+            if isinstance(config[field], list):
+                config[field] = list(config[field])
+                SourceList = config[field]
+                ForQueue.append(','.join(SourceList))
+                for iSource,source in enumerate(SourceList):
+                    if FLAG_LOCALDATA:
+                        config[field][iSource] = os.path.basename(source)
+                    else:
+                        config[field][iSource] = normpath(source)
+            else:
+                source = config[field]
+                ForQueue.append(source)
+                if FLAG_LOCALDATA:
+                    config[field] = os.path.basename(source)
+                else:
+                    config[field] = normpath(source)
+
+        if 'URLS' in config:
+            del config['URLS']
+
+        f.write('"' + '","'.join([iJob] + ForQueue) + '"' +  '\n')
+
+
+if hasProgress:
     bar.finish()
-except NameError:
-    pass
 
 with open('.njobs','w') as f:
     f.write(str(njobs)+'\n')
