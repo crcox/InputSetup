@@ -211,7 +211,7 @@ if 'URLS' in stub:
         f.write(','.join(['jobdir']+URLS) + '\n')
 
     with open('./queue_input.csv','w') as f:
-        for i, iJob, config in enumerate(zip(JobDirs,master)):
+        for i, (iJob, config) in enumerate(zip(JobDirs,master)):
             ForQueue = []
             for field in URLS:
                 if isinstance(config[field], list):
