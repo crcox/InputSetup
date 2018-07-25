@@ -143,6 +143,15 @@ else:
 #############################################################
 #                  Write Queue Input File                   #
 #############################################################
+njobs = len(master)
+
+if hasProgress:
+    bar = progress.bar.Bar('', max=njobs)
+
+print("Composing {njobs:d} individual jobs...".format(njobs=njobs))
+width = pycon.utils.ndigits(njobs-1)
+JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in range(njobs)]
+
 if 'URLS' in stub:
     URLS = stub['URLS']
     with open('./queue_input.header','w') as f:
@@ -181,14 +190,6 @@ if 'URLS' in stub:
 #############################################################
 #              Setup individual jobs structure              #
 #############################################################
-njobs = len(master)
-
-if hasProgress:
-    bar = progress.bar.Bar('', max=njobs)
-
-print("Composing {njobs:d} individual jobs...".format(njobs=njobs))
-width = pycon.utils.ndigits(njobs-1)
-JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in range(njobs)]
 if 'COPY' in stub and not stub['COPY'] is None:
     COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
 else:
