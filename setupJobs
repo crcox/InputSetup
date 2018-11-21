@@ -13,7 +13,7 @@ from pycon import pycon
 try:
     from numpy import argsort, ceil, log, random
     import pandas
-    from hyperband import hyperband, get_random_hyperparameter_configuration
+    import hyperband
 except ImportError:
     pass
 
@@ -78,12 +78,12 @@ if 'HYPERBAND' in stub:
     budget = stub['HYPERBAND']['budget']
     eta = stub['HYPERBAND']['aggressiveness']
     hyperparams = stub['HYPERBAND']['hyperparameters']
-    BRACKETS = hyperband(budget, eta)
+    BRACKETS = hyperband.hyperband(budget, eta)
     for p in hyperparams:
         distribution = stub[p]['distribution']
         dist_args = stub[p]['args']
         stub[p] = [[
-            get_random_hyperparameter_configuration(distribution, dist_args)
+            hyperband.get_random_hyperparameter_configuration(distribution, dist_args)
             for i in range(s['n'][0]) ]
             for s in BRACKETS ]
 
@@ -185,7 +185,7 @@ if 'URLS' in stub:
             if 'URLS' in config:
                 del config['URLS']
 
-            f.write(','.join([iJob] + ForQueue) +  '\n')
+            f.write(','.join([os.path.basename(iJob)] + ForQueue) +  '\n')
 
 #############################################################
 #              Setup individual jobs structure              #
