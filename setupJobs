@@ -69,7 +69,7 @@ if SUBMITYAML:
 else:
     FLAG_SETUPDAG = False
 
-SPECIALFIELDS = ['EXPAND','URLS','COPY']
+SPECIALFIELDS = ['EXPAND','URLS','COPY','CODE','DATA']
 StubAsMaster = False
 
 with open(STUBYAML,'rb') as f:
@@ -129,12 +129,73 @@ if 'COPY' in stub and not stub['COPY'] is None:
 else:
     COPY_shared = []
 
+if 'CODE' in stub and not stub['CODE'] is None:
+    CODE_shared = [field for field in stub['CODE'] if field not in EXPAND]
+else:
+    CODE_shared = []
+
+if 'DATA' in stub and not stub['DATA'] is None:
+    DATA_shared = [field for field in stub['DATA'] if field not in EXPAND]
+else:
+    DATA_shared = []
+
 for field in COPY_shared:
     if isinstance(stub[field],list):
         SourceList = stub[field]
         for iSource,source in enumerate(SourceList):
             target = os.path.join(sharedir,os.path.basename(source))
-            shutil.copyfile(source, target)
+            if os.path.isdir(source):
+                shutil.copytree(source, target)
+            else:
+                shutil.copyfile(source, target)
+            target = pathjoin(sharedir,os.path.basename(source))
+            if FLAG_LOCALDATA:
+                stub[field][iSource] = os.path.basename(target)
+            else:
+                stub[field][iSource] = normpath(pathjoin('..',sharedir,os.path.basename(target)))
+    else:
+        source = stub[field]
+        target = os.path.join(sharedir,os.path.basename(source))
+        shutil.copyfile(source, target)
+        target = pathjoin(sharedir,os.path.basename(source))
+        if FLAG_LOCALDATA:
+            stub[field] = os.path.basename(target)
+        else:
+            stub[field] = normpath(pathjoin('..',sharedir,os.path.basename(target)))
+
+for field in CODE_shared:
+    if isinstance(stub[field],list):
+        SourceList = stub[field]
+        for iSource,source in enumerate(SourceList):
+            target = os.path.join(sharedir,os.path.basename(source))
+            if os.path.isdir(source):
+                shutil.copytree(source, target)
+            else:
+                shutil.copyfile(source, target)
+            target = pathjoin(sharedir,os.path.basename(source))
+            if FLAG_LOCALDATA:
+                stub[field][iSource] = os.path.basename(target)
+            else:
+                stub[field][iSource] = normpath(pathjoin('..',sharedir,os.path.basename(target)))
+    else:
+        source = stub[field]
+        target = os.path.join(sharedir,os.path.basename(source))
+        shutil.copyfile(source, target)
+        target = pathjoin(sharedir,os.path.basename(source))
+        if FLAG_LOCALDATA:
+            stub[field] = os.path.basename(target)
+        else:
+            stub[field] = normpath(pathjoin('..',sharedir,os.path.basename(target)))
+
+for field in DATA_shared:
+    if isinstance(stub[field],list):
+        SourceList = stub[field]
+        for iSource,source in enumerate(SourceList):
+            target = os.path.join(sharedir,os.path.basename(source))
+            if os.path.isdir(source):
+                shutil.copytree(source, target)
+            else:
+                shutil.copyfile(source, target)
             target = pathjoin(sharedir,os.path.basename(source))
             if FLAG_LOCALDATA:
                 stub[field][iSource] = os.path.basename(target)
@@ -200,6 +261,16 @@ njobs = len(master)
 print("Composing {njobs:d} individual jobs...".format(njobs=njobs))
 width = pycon.utils.ndigits(njobs-1)
 JobDirs = [os.path.join(ROOTDIR, "{job:0{w}d}".format(job=i,w=width)) for i in range(njobs)]
+if 'CODE' in stub and not stub['CODE'] is None:
+    CODE_uniq = [field for field in stub['CODE'] if field in EXPAND]
+else:
+    CODE_uniq = []
+
+if 'DATA' in stub and not stub['DATA'] is None:
+    DATA_uniq = [field for field in stub['DATA'] if field in EXPAND]
+else:
+    DATA_uniq = []
+
 if 'COPY' in stub and not stub['COPY'] is None:
     COPY_uniq = [field for field in stub['COPY'] if field in EXPAND]
 else:
@@ -226,7 +297,63 @@ for iJob,config in zip(JobDirs,master):
             SourceList = config[field]
             for iSource,source in enumerate(SourceList):
                 target = os.path.join(iJob,os.path.basename(source))
-                shutil.copyfile(source, target)
+                if os.path.isdir(source):
+                    shutil.copytree(source, target)
+                else:
+                    shutil.copyfile(source, target)
+
+                target = pathjoin(iJob,os.path.basename(source))
+                if FLAG_LOCALDATA:
+                    config[field][iSource] = os.path.basename(target)
+                else:
+                    config[field][iSource] = normpath(target)
+        else:
+            source = config[field]
+            target = os.path.join(iJob,os.path.basename(source))
+            shutil.copyfile(source, target)
+            target = pathjoin(iJob,os.path.basename(source))
+            if FLAG_LOCALDATA:
+                config[field] = os.path.basename(target)
+            else:
+                config[field] = normpath(target)
+
+    for field in CODE_uniq:
+        if isinstance(config[field], list):
+            config[field] = list(config[field])
+            SourceList = config[field]
+            for iSource,source in enumerate(SourceList):
+                target = os.path.join(iJob,os.path.basename(source))
+                if os.path.isdir(source):
+                    shutil.copytree(source, target)
+                else:
+                    shutil.copyfile(source, target)
+
+                target = pathjoin(iJob,os.path.basename(source))
+                if FLAG_LOCALDATA:
+                    config[field][iSource] = os.path.basename(target)
+                else:
+                    config[field][iSource] = normpath(target)
+        else:
+            source = config[field]
+            target = os.path.join(iJob,os.path.basename(source))
+            shutil.copyfile(source, target)
+            target = pathjoin(iJob,os.path.basename(source))
+            if FLAG_LOCALDATA:
+                config[field] = os.path.basename(target)
+            else:
+                config[field] = normpath(target)
+
+    for field in DATA_uniq:
+        if isinstance(config[field], list):
+            config[field] = list(config[field])
+            SourceList = config[field]
+            for iSource,source in enumerate(SourceList):
+                target = os.path.join(iJob,os.path.basename(source))
+                if os.path.isdir(source):
+                    shutil.copytree(source, target)
+                else:
+                    shutil.copyfile(source, target)
+
                 target = pathjoin(iJob,os.path.basename(source))
                 if FLAG_LOCALDATA:
                     config[field][iSource] = os.path.basename(target)
