@@ -33,7 +33,7 @@ p = argparse.ArgumentParser()
 # Required Positional Arguments
 p.add_argument('stub')
 # Flags
-p.add_argument('-l','--local_data',action='store_true')
+p.add_argument('-l','--local_data',action='store_true',help='If this option is specified, paths will not be modifies when writing parameter files (useful when used locally, not on HTCondo).')
 p.add_argument('-p','--posix_paths',action='store_true',help='Force the path-separater character to be / (rather than \ on Windows).')
 # Options
 p.add_argument('-o','--offset_index',type=int,nargs=1,default=0,help='Number of the first directory to affect/create. Intended to help add jobs to an existing set.')
@@ -110,12 +110,12 @@ else:
 #############################################################
 #         Copy files to be shared into ./shared             #
 #############################################################
-# After copying, the file path is updated so that the
-# executable will reference the copied version of the file. If
-# FLAG_LOCALDATA is True, then the path will be set to look
-# for the file in the job's current directory. This is for jobs
-# that run on HTCondor, since all files are transfered into the
-# job directory (directories themselves are not transfered).
+# After copying, the file path is updated so that the executable will reference
+# the copied version of the file. If FLAG_LOCALDATA is False [default], then
+# the path will be set to look for the file in the job's current directory.
+# This is for jobs that run on HTCondor, since all files are transfered into
+# the job directory (directories themselves are not transfered).
+# If FLAG_LOCALDATA is True, then paths are not modified.
 if 'COPY' in stub and not stub['COPY'] is None:
     COPY_shared = [field for field in stub['COPY'] if field not in EXPAND]
 else:
@@ -133,18 +133,18 @@ for field in COPY_shared:
                 shutil.copyfile(source, target)
             target = pathjoin(sharedir,os.path.basename(source))
             if FLAG_LOCALDATA:
-                stub[field][iSource] = os.path.basename(target)
-            else:
                 stub[field][iSource] = normpath(pathjoin('..',sharedir,os.path.basename(target)))
+            else:
+                stub[field][iSource] = os.path.basename(target)
     else:
         source = stub[field]
         target = os.path.join(sharedir,os.path.basename(source))
         shutil.copyfile(source, target)
         target = pathjoin(sharedir,os.path.basename(source))
         if FLAG_LOCALDATA:
-            stub[field] = os.path.basename(target)
-        else:
             stub[field] = normpath(pathjoin('..',sharedir,os.path.basename(target)))
+        else:
+            stub[field] = os.path.basename(target)
 
 
 if StubAsMaster:
@@ -227,18 +227,18 @@ for iJob,config in zip(JobDirs,master):
 
                 target = pathjoin(iJob,os.path.basename(source))
                 if FLAG_LOCALDATA:
-                    config[field][iSource] = os.path.basename(target)
-                else:
                     config[field][iSource] = normpath(target)
+                else:
+                    config[field][iSource] = os.path.basename(target)
         else:
             source = config[field]
             target = os.path.join(iJob,os.path.basename(source))
             shutil.copyfile(source, target)
             target = pathjoin(iJob,os.path.basename(source))
             if FLAG_LOCALDATA:
-                config[field] = os.path.basename(target)
-            else:
                 config[field] = normpath(target)
+            else:
+                config[field] = os.path.basename(target)
 
 
     #############################################################
