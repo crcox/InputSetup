@@ -70,6 +70,12 @@ except KeyError:
 sharedir = os.path.join(ROOTDIR,'shared')
 if not os.path.isdir(sharedir):
     os.makedirs(sharedir)
+packdir = os.path.join(ROOTDIR,'packages')
+if not os.path.isdir(packdir):
+    os.makedirs(packdir)
+logdir = os.path.join(ROOTDIR,'log')
+if not os.path.isdir(logdir):
+    os.makedirs(logdir)
 sharedir = pathjoin(ROOTDIR,'shared')
 
 #############################################################
