@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name = "InputSetup",
-    version = "0.0.1",
+    version = "0.1.0",
     author = "Christopher R. Cox",
     author_email = "chriscox@lsu.edu",
     description = ("Collection of tools for setting up many HTCondor jobs."),
