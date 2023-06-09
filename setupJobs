@@ -8,22 +8,15 @@ from distutils.dir_util import copy_tree
 import shutil
 import subprocess
 import yaml
+
 # from mako.template import Template
 from pycon import pycon
 
-try:
-    from numpy import argsort, ceil, log, random
-    import pandas
-    import hyperband
-except ImportError:
-    pass
-
-try:
-    import progress.bar
-    hasProgress = True
-except ImportError:
-    hasProgress = False
-    pass
+from numpy import argsort, ceil, log, random
+from hyperband import hyperband
+import pandas
+import progress.bar
+hasProgress = True
 
 resource_package = 'pycon';
 resource_path_submit = os.path.join('templates','process.mako')

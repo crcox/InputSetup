@@ -21,6 +21,9 @@ setup(
     scripts = ['setupJobs','quickstub'],
     long_description=read('README.md'),
     install_requires=[
+                  'pandas',
+                  'progress',
+                  'numpy',
                   'pyyaml',
                   'mako'
     ],
